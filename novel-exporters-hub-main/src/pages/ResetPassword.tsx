@@ -51,8 +51,8 @@ const ResetPassword = () => {
                 {!isSuccess ? (
                     <>
                         <div className="mb-8 text-center">
-                            <h1 className="text-3xl font-bold font-serif text-foreground mb-2">New Password</h1>
-                            <p className="text-muted-foreground">Please enter your new secure password below.</p>
+                            <h1 className="text-3xl font-bold font-serif text-foreground mb-2">Novel Exporters</h1>
+                            <p className="text-muted-foreground">Please enter your new secure password to regain access to the portal.</p>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">

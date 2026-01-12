@@ -52,6 +52,172 @@ const AdminDashboard = () => {
         }
     };
 
+    const generatePDFReport = () => {
+        try {
+            // Create HTML content for PDF
+            const reportContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Novel Exporters - Export Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+                        h1 { color: #0c4a6e; border-bottom: 3px solid #fbbf24; padding-bottom: 10px; }
+                        h2 { color: #475569; margin-top: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th { background: #0c4a6e; color: white; padding: 12px; text-align: left; }
+                        td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+                        tr:hover { background: #f8fafc; }
+                        .stats { display: flex; gap: 20px; margin: 20px 0; }
+                        .stat-card { flex: 1; padding: 20px; background: #f1f5f9; border-radius: 8px; }
+                        .stat-value { font-size: 32px; font-weight: bold; color: #0c4a6e; }
+                        .stat-label { color: #64748b; font-size: 14px; text-transform: uppercase; }
+                        .footer { margin-top: 50px; text-align: center; color: #64748b; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📊 Novel Exporters - Export Report</h1>
+                    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                    <p><strong>Report Type:</strong> Comprehensive Export Operations Summary</p>
+                    
+                    <h2>📈 Key Metrics</h2>
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-value">${orders.length}</div>
+                            <div class="stat-label">Total Orders</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${enquiries.length}</div>
+                            <div class="stat-label">Enquiries</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${users.length}</div>
+                            <div class="stat-label">Registered Users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${Object.values(analytics?.productStats || {}).reduce((a: any, b: any) => a + b, 0)}</div>
+                            <div class="stat-label">Total Units</div>
+                        </div>
+                    </div>
+
+                    <h2>📦 Orders Summary</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Products</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${orders.map(order => `
+                                <tr>
+                                    <td>#${order._id.slice(-6).toUpperCase()}</td>
+                                    <td>${order.user?.username || 'N/A'}</td>
+                                    <td>${order.user?.email || 'N/A'}</td>
+                                    <td>${order.products.map((p: any) => `${p.name} (${p.quantity})`).join(', ')}</td>
+                                    <td><strong>${order.status.toUpperCase()}</strong></td>
+                                    <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <h2>📧 Enquiries Summary</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Message</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${enquiries.map(enq => `
+                                <tr>
+                                    <td>${enq.username}</td>
+                                    <td>${enq.email}</td>
+                                    <td>${enq.message.substring(0, 100)}...</td>
+                                    <td>${new Date(enq.createdAt).toLocaleDateString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <h2>👥 Users Summary</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${users.map(u => `
+                                <tr>
+                                    <td>${u.username}</td>
+                                    <td>${u.email}</td>
+                                    <td>${u.phone || 'N/A'}</td>
+                                    <td><strong>${u.role.toUpperCase()}</strong></td>
+                                    <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <h2>📊 Product Analytics</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Total Units Ordered</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${analytics?.productStats ? Object.entries(analytics.productStats)
+                    .sort((a: any, b: any) => b[1] - a[1])
+                    .map(([name, qty]: any) => `
+                                    <tr>
+                                        <td>${name}</td>
+                                        <td><strong>${qty} units</strong></td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="2">No data available</td></tr>'}
+                        </tbody>
+                    </table>
+
+                    <div class="footer">
+                        <p>© 2026 Novel Exporters | International Trading Excellence</p>
+                        <p>This report is confidential and intended for internal use only.</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Create a blob and download
+            const blob = new Blob([reportContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Novel_Exporters_Report_${new Date().toISOString().split('T')[0]}.html`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            toast.success("Export report generated successfully! Open the HTML file and use your browser's Print to PDF feature.");
+        } catch (err) {
+            toast.error("Failed to generate report");
+        }
+    };
+
     if (isLoading) return (
         <div className="min-h-screen flex items-center justify-center bg-background">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -72,7 +238,7 @@ const AdminDashboard = () => {
                     </div>
                     <div className="flex items-center gap-3">
                         <Button variant="outline" onClick={fetchData} className="rounded-xl">Refresh Data</Button>
-                        <Button variant="warm" className="rounded-xl shadow-lg shadow-primary/20">Generate Export Report</Button>
+                        <Button variant="warm" onClick={generatePDFReport} className="rounded-xl shadow-lg shadow-primary/20">Generate Export Report</Button>
                     </div>
                 </div>
 

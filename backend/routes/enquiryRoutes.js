@@ -75,12 +75,19 @@ router.post("/", async (req, res) => {
     await transporter.sendMail({
       from: `"Novel Exporters" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "Enquiry Received – Novel Exporters",
+      subject: "✅ Enquiry Received – Novel Exporters",
       html: `
-        <div style="font-family: Arial, sans-serif;">
-          <h3>Hello ${username},</h3>
-          <p>We've received your enquiry regarding our premium spices. Our team will get back to you shortly.</p>
-          <p>Regards,<br><strong>Novel Exporters Team</strong></p>
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #334155; line-height: 1.6;">
+          <h2 style="color: #0c4a6e; border-bottom: 2px solid #fbbf24; padding-bottom: 10px;">Hello ${username},</h2>
+          <p>Thank you for reaching out to <strong>Novel Exporters</strong>. We have successfully received your business enquiry.</p>
+          <p>Our team is reviewing your requirements and one of our export specialists will contact you within 24-48 hours with the requested information.</p>
+          <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+             <p style="margin: 0;"><strong>Your Message:</strong></p>
+             <p style="font-style: italic; color: #64748b;">"${message}"</p>
+          </div>
+          <p>In the meantime, feel free to explore our <a href="http://localhost:8080/products" style="color: #0284c7; text-decoration: none; font-weight: 600;">latest product catalog</a>.</p>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 25px 0;" />
+          <p style="font-size: 0.9em;">Best Regards,<br><strong>Novel Exporters Team</strong><br><small>Quality Spices. Global Reach.</small></p>
         </div>
       `,
     });

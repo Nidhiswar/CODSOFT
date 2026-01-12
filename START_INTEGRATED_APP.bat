@@ -20,7 +20,7 @@ echo.
 
 echo Phase 3: Launching Integrated Suite...
 echo.
-echo [BACKEND] Starting on http://127.0.0.1:5000
+echo [BACKEND] Starting on http://127.0.0.1:5009
 start "Novel-Backend" /min cmd /k "cd backend && node server.js"
 
 timeout /t 3 /nobreak > nul
@@ -32,7 +32,7 @@ echo.
 echo ==================================================
 echo   ✅ SUCCESS: BOTH SERVICES ARE DEPLOYING
 echo   - Frontend: http://localhost:8080
-echo   - Backend Status: http://localhost:5000/api
+echo   - Backend Status: http://localhost:5009/api
 echo ==================================================
 echo.
 pause

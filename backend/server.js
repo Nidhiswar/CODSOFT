@@ -14,10 +14,24 @@ const enquiryRoutes = require("./routes/enquiryRoutes");
 const app = express();
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/novel_exporters";
-mongoose.connect(MONGODB_URI)
+const MONGODB_URI = process.env.MONGODB_URI;
+console.log("🔍 Attempting to connect to MongoDB...");
+
+
+if (!MONGODB_URI) {
+  console.error("❌ MONGODB_URI is not defined in .env file");
+}
+
+mongoose.connect(MONGODB_URI, {
+  serverSelectionTimeoutMS: 5000,
+  family: 4,
+})
   .then(() => console.log("🚀 MongoDB Integrated Successfully"))
-  .catch(err => console.error("❌ MongoDB Connection Error:", err));
+  .catch(err => {
+    console.error("❌ MongoDB Connection Error:", err.message);
+    console.log("⚠️ Continuing without MongoDB... (Login/Orders will fail, but Chat might work)");
+  });
+
 
 app.use(cors());
 app.use(helmet());
@@ -45,7 +59,9 @@ const API_KEY = process.env.GEMINI_API_KEY;
 if (!API_KEY) {
   console.warn("⚠️ GEMINI_API_KEY not found in environment variables.");
 }
+console.log("🤖 Initializing Gemini AI with key starting with:", API_KEY ? API_KEY.substring(0, 5) + "..." : "MISSING");
 const genAI = new GoogleGenerativeAI(API_KEY || "");
+
 
 const productCatalog = `
 Novel Exporters Detailed Product Knowledge Base:
@@ -60,7 +76,7 @@ Novel Exporters Detailed Product Knowledge Base:
 - Star Anise: Origin: Kerala. Harvest: Oct-Dec. Quality: Complete 8 petal stars, Strong anethole aroma.
 - Bay Leaves: Origin: Western Ghats (TN/KL). Harvest: Oct-Dec. Quality: Uniform green, zero moisture/fungus.
 
-Certifications: FSSAI (India), ISO 22000 (Food Safety), HACCP (Hazard Analysis).
+Certifications: FSSAI (India), ISO 22000 (Food Safety), IEC.
 Logistics: Bulk Sea Exports (via Tuticorin or Kochi ports), Priority Air Exports for high-value orders.
 Company Mission: Sourcing 100% authentic spices directly from South Indian farms for global export markets.
 `;
@@ -76,10 +92,44 @@ Rules:
 5. For shipping terms, mention that we handle both Sea (Tuticorin/Kochi ports) and Air exports.
 `;
 
+// Use gemini-pro-latest as a reliable fallback
 const model = genAI.getGenerativeModel({
-  model: "gemini-2.0-flash",
+  model: "gemini-pro-latest",
   systemInstruction: systemInstruction,
 });
+console.log("✅ Gemini Model Initialized (gemini-pro-latest)");
+
+
+// Helper for Ollama Fallback
+async function callOllama(message, history) {
+  try {
+    const formattedHistory = (history || []).map(h => ({
+      role: h.role === "model" ? "assistant" : h.role,
+      content: h.parts[0].text
+    }));
+
+    const response = await fetch("http://127.0.0.1:11434/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "gemma3:4b",
+        messages: [
+          { role: "system", content: systemInstruction },
+          ...formattedHistory,
+          { role: "user", content: message }
+        ],
+        stream: false
+      })
+    });
+
+    if (!response.ok) throw new Error(`Ollama Error: ${response.statusText}`);
+    const data = await response.json();
+    return data.message.content;
+  } catch (err) {
+    console.error("❌ Ollama Fallback Failed:", err.message);
+    throw err;
+  }
+}
 
 app.post("/api/chat", async (req, res) => {
   const { message, history } = req.body;
@@ -88,26 +138,59 @@ app.post("/api/chat", async (req, res) => {
     return res.status(400).json({ message: "Message is required" });
   }
 
-  // Check if API key exists
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(401).json({
-      message: "API Key Missing: Please provide a GEMINI_API_KEY in your .env file."
-    });
-  }
-
+  // Attempt Gemini First
   try {
+    if (!process.env.GEMINI_API_KEY) throw new Error("API Key Missing");
+
+    let validHistory = (history || [])
+      .filter(item => item.role === "user" || item.role === "model")
+      .map(item => ({
+        role: item.role,
+        parts: item.parts.map(p => ({ text: p.text }))
+      }));
+
+    // Remove consecutive same-role messages
+    validHistory = validHistory.filter((msg, index) => {
+      if (index === 0) return msg.role === "user"; // Must start with user
+      return msg.role !== validHistory[index - 1].role;
+    });
+
     const chat = model.startChat({
-      history: history || [],
+      history: validHistory,
     });
 
     const result = await chat.sendMessage(message);
     const response = await result.response;
     const text = response.text();
 
-    res.json({ text });
+    return res.json({ text });
   } catch (err) {
-    console.error("Gemini Error:", err);
-    res.status(500).json({ message: "AI response failed. Ensure your Gemini API key is valid and has sufficient quota." });
+    console.error("❌ Gemini Error Details:", err);
+    console.warn("⚠️ Gemini primary failed:", err.message);
+
+    // Fallback: Try WITHOUT history if history caused the error
+    try {
+      if (history && history.length > 0) {
+        console.log("🔄 Attempting fallback without history...");
+        const result = await model.generateContent(message);
+        const response = await result.response;
+        return res.json({ text: response.text() });
+      }
+    } catch (fallbackErr) {
+      console.error("🔥 Secondary Gemini attempt failed:", fallbackErr.message);
+    }
+
+
+    try {
+      const ollamaText = await callOllama(message, history);
+      return res.json({ text: ollamaText });
+    } catch (ollamaErr) {
+      console.error("🔥 Both Gemini and Ollama Failed:", ollamaErr.message);
+      res.status(500).json({
+        message: "AI services currently unavailable. Please try again later or contact support.",
+        details: ollamaErr.message
+      });
+    }
   }
 });
 
@@ -129,8 +212,15 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5009;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Novel Exporters Backend Active: http://127.0.0.1:${PORT}`);
   console.log(`📂 API Gateway: http://127.0.0.1:${PORT}/api`);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use. Please kill the existing process or use a different port.`);
+  } else {
+    console.error(`❌ Server Error:`, err);
+  }
 });
+

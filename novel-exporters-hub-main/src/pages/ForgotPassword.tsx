@@ -49,8 +49,8 @@ const ForgotPassword = () => {
                 {!isSent ? (
                     <>
                         <div className="mb-8">
-                            <h1 className="text-3xl font-bold font-serif text-foreground mb-2">Forgot Password?</h1>
-                            <p className="text-muted-foreground">Enter your email and we'll send you a link to reset your password.</p>
+                            <h1 className="text-3xl font-bold font-serif text-foreground mb-2">Novel Exporters</h1>
+                            <p className="text-muted-foreground">Enter your email and we'll send you a secure link to reset your account password.</p>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">

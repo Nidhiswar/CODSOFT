@@ -40,7 +40,10 @@ const App = () => {
         try {
           const userData = await api.getMe();
           if (userData && !userData.message) {
-            setUser({ ...userData, isAdmin: userData.role === 'admin' });
+            setUser({
+              ...userData,
+              isAdmin: userData.role === 'admin' && userData.email.endsWith('@novelexporters.com')
+            });
           } else {
             localStorage.removeItem("token");
           }
@@ -54,7 +57,10 @@ const App = () => {
   }, []);
 
   const handleLogin = (userData: any) => {
-    setUser({ ...userData, isAdmin: userData.role === 'admin' });
+    setUser({
+      ...userData,
+      isAdmin: userData.role === 'admin' && userData.email.endsWith('@novelexporters.com')
+    });
   };
 
   const handleLogout = () => {
@@ -94,7 +100,7 @@ const App = () => {
                   path="/products"
                   element={
                     <Layout user={user} onLogout={handleLogout}>
-                      <Products />
+                      <Products user={user} />
                     </Layout>
                   }
                 />

@@ -39,6 +39,8 @@ const ProductCard = ({ product, index = 0, onClick, className }: ProductCardProp
       }}
       whileHover={{
         y: -12,
+        scale: 1.02,
+        boxShadow: "0 25px 50px -12px rgba(196, 160, 82, 0.25)",
         transition: { type: "spring", stiffness: 400, damping: 10 }
       }}
     >

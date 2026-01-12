@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, Phone } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import novelLogo from "@/assets/novel-logo-dynamic.png";
 
 interface LoginProps {
   onLogin: (userData: any) => void;
@@ -70,30 +71,34 @@ const Login = ({ onLogin }: LoginProps) => {
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden py-20 px-4">
       {/* Background with higher quality assets */}
       <div className="absolute inset-0 bg-zinc-950" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(196,160,82,0.15),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center opacity-30" />
+      <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/20 via-zinc-950/60 to-zinc-950" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(196,160,82,0.1),transparent_50%)]" />
 
       {/* Dynamic Orbs */}
-      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/20 rounded-full blur-[100px] animate-pulse" />
-      <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-spice-gold/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
+      <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-spice-gold/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
 
       {/* Form Container */}
       <div className="relative z-10 w-full max-w-md">
         <div className="p-8 md:p-12 rounded-[2.5rem] bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl">
           {/* Logo/Brand */}
           <div className="text-center mb-10">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-spice-gold to-primary p-0.5 shadow-2xl">
-              <div className="w-full h-full bg-zinc-900 rounded-[1.4rem] flex items-center justify-center">
-                <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-spice-gold to-white font-serif">N</span>
+            <div className="flex flex-col items-center justify-center gap-4 mb-6">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-spice-gold via-white to-primary flex items-center justify-center shadow-[0_0_50px_rgba(196,160,82,0.3)] p-1 group hover:scale-105 transition-transform duration-500">
+                <div className="w-full h-full bg-white rounded-[1.4rem] flex items-center justify-center overflow-hidden">
+                  <img src={novelLogo} alt="Logo" className="w-20 h-20 object-contain drop-shadow-xl" />
+                </div>
               </div>
+              <h1 className="text-4xl font-bold font-serif text-white tracking-tight">
+                Novel Exporters
+              </h1>
             </div>
-            <h1 className="text-3xl font-bold font-serif text-white tracking-tight">
-              {isLogin ? "Global Partners Hub" : "Join the Network"}
-            </h1>
-            <div className="mt-4 p-4 rounded-2xl bg-primary/5 border border-primary/10">
-              <p className="text-zinc-400 text-xs font-medium leading-relaxed italic">
+            <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+              <p className="text-zinc-300 text-xs font-medium leading-relaxed italic">
                 {isLogin
-                  ? "👋 Welcome back. Securely manage your global spice quotations and track international shipping status below."
-                  : "✨ Register to access wholesale pricing, verified lab reports, and direct factory-to-port logistics tracking."}
+                  ? "👋 Welcome back. Sign in to manage your orders and track international shipping."
+                  : "✨ Register to access premium wholesale pricing and direct factory-to-port logistics."}
               </p>
             </div>
           </div>
@@ -154,7 +159,7 @@ const Login = ({ onLogin }: LoginProps) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Secret Key</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">password</label>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-primary transition-colors" />
                 <Input
@@ -211,7 +216,7 @@ const Login = ({ onLogin }: LoginProps) => {
                 <Loader2 className="w-6 h-6 animate-spin" />
               ) : (
                 <>
-                  {isLogin ? "Establish Session" : "Apply for Access"}
+                  {isLogin ? "Sign In to Account" : "Register Now"}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </>
               )}
@@ -221,13 +226,13 @@ const Login = ({ onLogin }: LoginProps) => {
           {/* Switcher */}
           <div className="mt-8 text-center pt-8 border-t border-white/5">
             <p className="text-zinc-500 text-sm font-medium">
-              {isLogin ? "Access Required?" : "Already Authorized?"}
+              {isLogin ? "New to Novel Exporters?" : "Already have an account?"}
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
                 className="ml-2 text-primary font-bold hover:text-white transition-colors"
               >
-                {isLogin ? "Apply Now" : "Sign In"}
+                {isLogin ? "Create Account" : "Sign In"}
               </button>
             </p>
           </div>

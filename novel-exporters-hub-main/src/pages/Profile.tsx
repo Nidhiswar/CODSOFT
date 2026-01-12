@@ -86,7 +86,7 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
               <h1 className="text-3xl font-bold font-serif text-foreground mb-1">{user.email.split('@')[0].toUpperCase()}</h1>
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full border border-primary/20">
-                  {user.role === 'admin' ? "Administrator" : "Verified Partner"}
+                  {user.isAdmin ? "Administrator" : "User Profile"}
                 </span>
                 <span className="text-xs text-muted-foreground">{user.email}</span>
               </div>
@@ -94,7 +94,7 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
           </div>
 
           <div className="flex items-center gap-3 relative z-10">
-            {user.role === 'admin' && (
+            {user.isAdmin && (
               <Button variant="warm" onClick={() => navigate("/admin")} className="rounded-2xl">
                 <Shield className="w-4 h-4 mr-2" />
                 Admin Dashboard

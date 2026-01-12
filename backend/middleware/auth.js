@@ -19,11 +19,16 @@ const auth = async (req, res, next) => {
     }
 };
 
-const admin = (req, res, next) => {
-    if (req.userRole !== "admin") {
-        return res.status(403).json({ message: "Access denied. Admin only." });
+const admin = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user || user.role !== "admin" || user.email !== "internationalsupport@novelexporters.com") {
+            return res.status(403).json({ message: "Access denied. Admin access restricted to internationalsupport@novelexporters.com only." });
+        }
+        next();
+    } catch (err) {
+        res.status(500).json({ message: "Server error during authorization" });
     }
-    next();
 };
 
 module.exports = { auth, admin };

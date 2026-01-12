@@ -25,9 +25,8 @@ router.post("/register", async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // First user can be admin if you want, or just manual setting
-        const userCount = await User.countDocuments();
-        const role = userCount === 0 ? "admin" : "user";
+        // Only internationalsupport@novelexporters.com is admin
+        const role = email === "internationalsupport@novelexporters.com" ? "admin" : "user";
 
         user = new User({ username, email, phone, password: hashedPassword, role });
         await user.save();
@@ -70,25 +69,36 @@ router.post("/forgot-password", async (req, res) => {
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
         await user.save();
 
-        const resetUrl = `http://localhost:8082/reset-password/${token}`;
+        const resetUrl = `http://localhost:8080/reset-password/${token}`;
 
         await transporter.sendMail({
             from: `"Novel Exporters Security" <${process.env.EMAIL_USER}>`,
             to: user.email,
-            subject: "Password Reset Request",
+            subject: "🔐 Password Reset Request – Novel Exporters",
             html: `
-                <div style="font-family: sans-serif; padding: 20px;">
-                    <h2>Password Reset Request</h2>
-                    <p>You requested a password reset. Please click the button below to set a new password:</p>
-                    <a href="${resetUrl}" style="background: #fbbf24; color: black; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
-                    <p>If you did not request this, please ignore this email.</p>
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; background-color: #f8fafc; color: #1e293b; border-radius: 12px; max-width: 600px; margin: auto; border: 1px solid #e2e8f0;">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                         <h1 style="color: #0c4a6e; margin: 0; font-size: 24px;">NOVEL EXPORTERS</h1>
+                    </div>
+                    <div style="background-color: #ffffff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                        <h2 style="color: #0f172a; margin-top: 0;">Password Reset Request</h2>
+                        <p>Hello,</p>
+                        <p>You recently requested to reset your password for your <strong>Novel Exporters Portal</strong> account. Click the button below to proceed:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${resetUrl}" style="background: #fbbf24; color: #000; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block; transition: background 0.2s;">Reset Password</a>
+                        </div>
+                        <p style="font-size: 0.9em; color: #64748b;">This link will expire in 1 hour. If you did not request this reset, please ignore this email or contact our support team if you have concerns.</p>
+                        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 25px 0;" />
+                        <p style="font-size: 0.8em; color: #94a3b8; text-align: center;">&copy; 2026 Novel Exporters. All rights reserved.</p>
+                    </div>
                 </div>
             `
         });
 
         res.json({ message: "Reset email sent successfully" });
     } catch (err) {
-        res.status(500).json({ message: "Error sending reset email" });
+        console.error("❌ Forgot Password Error:", err);
+        res.status(500).json({ message: "Error sending reset email. Please try again later." });
     }
 });
 

@@ -3,6 +3,7 @@ import { Send, MessageSquare, X, MinusCircle, Loader2, Sparkles, AlertCircle } f
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
+import novelLogo from "@/assets/novel-logo-dynamic.png";
 
 interface Message {
     role: "user" | "model";
@@ -72,7 +73,7 @@ const ChatBot = () => {
             } else if (error.message.includes("Unexpected token") || error.message.includes("invalid response")) {
                 userFriendlyMessage = "Integration Error: The backend returned an invalid response. Please stop all processes and run 'START_INTEGRATED_APP.bat'.";
             } else if (error.message === "Failed to fetch") {
-                userFriendlyMessage = "Connection Error: Backend server not reachable at http://127.0.0.1:5000. Please ensure 'node server.js' is running.";
+                userFriendlyMessage = "Connection Error: Backend server not reachable at http://127.0.0.1:5008. Please ensure 'node server.js' is running.";
             }
 
             const errorMessage: Message = {
@@ -104,7 +105,7 @@ const ChatBot = () => {
                         </button>
                         <div className="flex items-start gap-3">
                             <div className="w-8 h-8 rounded-lg bg-spice-gold/10 flex items-center justify-center shrink-0">
-                                <Sparkles className="w-4 h-4 text-spice-gold" />
+                                <img src={novelLogo} alt="Novel Exporters" className="w-5 h-5 object-contain" />
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-foreground">Aromatic Specialist</p>
@@ -146,7 +147,7 @@ const ChatBot = () => {
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-spice-gold to-amber-600 flex items-center justify-center p-0.5">
                                     <div className="w-full h-full bg-white dark:bg-zinc-900 rounded-[0.9rem] flex items-center justify-center">
-                                        <Sparkles className="w-5 h-5 text-spice-gold" />
+                                        <img src={novelLogo} alt="Novel Exporters" className="w-7 h-7 object-contain" />
                                     </div>
                                 </div>
                                 <div>
@@ -175,8 +176,8 @@ const ChatBot = () => {
                                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                 >
                                     <div className={`max-w-[85%] p-4 rounded-2xl shadow-sm ${msg.role === 'user'
-                                            ? 'bg-spice-gold text-black rounded-tr-none font-medium'
-                                            : 'bg-zinc-100 dark:bg-zinc-800 text-foreground rounded-tl-none border border-border/50'
+                                        ? 'bg-spice-gold text-black rounded-tr-none font-medium'
+                                        : 'bg-zinc-100 dark:bg-zinc-800 text-foreground rounded-tl-none border border-border/50'
                                         }`}>
                                         <p className="text-sm leading-relaxed">{msg.parts[0].text}</p>
                                     </div>

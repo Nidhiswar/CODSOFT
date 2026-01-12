@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://127.0.0.1:5000/api";
+const API_BASE_URL = "http://127.0.0.1:5009/api";
 
 const getHeaders = () => ({
     "Content-Type": "application/json",
@@ -143,6 +143,11 @@ export const api = {
         const res = await fetch(`${API_BASE_URL}/auth/all-users`, {
             headers: getHeaders(),
         });
+        return res.json();
+    },
+
+    getTotalProductsCount: async () => {
+        const res = await fetch(`${API_BASE_URL}/orders/total-products-count`);
         return res.json();
     }
 };

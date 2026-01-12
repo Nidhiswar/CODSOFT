@@ -12,29 +12,29 @@ const Home = () => {
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center gradient-hero">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center opacity-20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-spice-earth/90 via-spice-earth/70 to-transparent" />
-        
+      <section className="relative min-h-[90vh] flex items-center bg-zinc-950 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center opacity-15" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent" />
+
         <div className="container-custom relative z-10 py-20">
           <div className="max-w-2xl space-y-6 animate-fade-in">
-            <span className="inline-block px-4 py-2 rounded-full bg-amber-400/90 text-spice-earth text-sm font-semibold shadow-lg backdrop-blur-sm animate-pulse">
-              Premium Quality Spices from Tamil Nadu and Kerala    
+            <span className="inline-block px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-500 text-zinc-900 text-sm font-black shadow-2xl shadow-amber-500/30 border-2 border-amber-300/50 backdrop-blur-sm hover:scale-105 transition-transform duration-300 uppercase tracking-widest">
+              Premium Quality Spices from Tamil Nadu and Kerala
             </span>
-            
+
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-serif text-white leading-tight">
               Bringing Nature's
-            <span className="block bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]">
-              Finest Flavors
-            </span>
+              <span className="block bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]">
+                Finest Flavors
+              </span>
               to the World
             </h1>
-            
+
             <p className="text-lg md:text-xl text-white/80 leading-relaxed">
-              Novel Exporters delivers authentic, handpicked spices straight from the heart of 
+              Novel Exporters delivers authentic, handpicked spices straight from the heart of
               Coimbatore. Experience the rich heritage of South Indian spices.
             </p>
-            
+
             <div className="flex flex-wrap gap-4 pt-4">
               <Link to="/products">
                 <Button variant="warm" size="xl">
@@ -93,12 +93,12 @@ const Home = () => {
                 Crafting Excellence in Every Grain
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                At Novel Exporters, we take pride in sourcing the finest spices from the fertile lands of 
-                Tamil Nadu. Our commitment to quality, sustainability, and customer satisfaction has made 
+                At Novel Exporters, we take pride in sourcing the finest spices from the fertile lands of
+                Tamil Nadu. Our commitment to quality, sustainability, and customer satisfaction has made
                 us a trusted name in the global spice trade.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                From the aromatic curry leaves of Coimbatore to the premium cardamom from the Western Ghats, 
+                From the aromatic curry leaves of Coimbatore to the premium cardamom from the Western Ghats,
                 each product tells a story of tradition, purity, and excellence.
               </p>
               <Link to="/about">
@@ -108,7 +108,7 @@ const Home = () => {
                 </Button>
               </Link>
             </div>
-            
+
             <div className="relative">
               <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl group transform transition-all duration-500 hover:scale-105 hover:-translate-y-2 hover:shadow-2xl animate-fade-in" tabIndex={0}>
                 <img
@@ -137,7 +137,7 @@ const Home = () => {
               Premium Spice Collection
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Discover our handpicked selection of authentic Tamil Nadu spices, 
+              Discover our handpicked selection of authentic Tamil Nadu spices,
               each bringing unique flavors and aromas to your kitchen.
             </p>
           </div>
@@ -165,13 +165,13 @@ const Home = () => {
           <div className="absolute top-10 left-10 w-40 h-40 rounded-full bg-secondary/30 blur-3xl" />
           <div className="absolute bottom-10 right-10 w-60 h-60 rounded-full bg-spice-gold/20 blur-3xl" />
         </div>
-        
+
         <div className="container-custom relative z-10 text-center">
           <h2 className="text-3xl md:text-4xl font-bold font-serif text-white mb-4">
             Ready to Experience Premium Spices?
           </h2>
           <p className="text-white/80 max-w-xl mx-auto mb-8">
-            Get in touch with us for bulk orders, custom packaging, or any enquiries. 
+            Get in touch with us for bulk orders, custom packaging, or any enquiries.
             We're here to bring the best spices to your doorstep.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
