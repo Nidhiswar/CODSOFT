@@ -5,7 +5,7 @@ import ChatBot from "../ChatBot";
 
 interface LayoutProps {
   children: ReactNode;
-  user?: { email: string; isAdmin: boolean } | null;
+  user?: { id: string; username: string; email: string; isAdmin: boolean; hasConsented?: boolean } | null;
   onLogout?: () => void;
 }
 

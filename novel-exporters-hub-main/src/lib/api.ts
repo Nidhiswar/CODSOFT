@@ -37,6 +37,15 @@ export const api = {
         return res.json();
     },
 
+    recordConsent: async (consentData: any) => {
+        const res = await fetch(`${API_BASE_URL}/auth/consent`, {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify(consentData),
+        });
+        return res.json();
+    },
+
     forgotPassword: async (email: string) => {
         const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
             method: "POST",

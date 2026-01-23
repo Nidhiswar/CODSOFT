@@ -5,9 +5,10 @@ const mongoSanitize = require("express-mongo-sanitize");
 const nodemailer = require("nodemailer");
 const cors = require("cors");
 
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const mongoose = require("mongoose");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const authRoutes = require("./routes/authRoutes");
 const enquiryRoutes = require("./routes/enquiryRoutes");
 
@@ -39,6 +40,17 @@ app.use(express.json());
 app.use(mongoSanitize());
 
 // Health Check / Integration Route
+app.get("/", (req, res) => {
+  res.json({
+    status: "Active",
+    message: "Novel Exporters Backend Server is running.",
+    endpoints: {
+      health: "/api",
+      chat: "/api/chat"
+    }
+  });
+});
+
 app.get("/api", (req, res) => {
   res.json({
     status: "Integrated",
@@ -54,13 +66,16 @@ app.use("/api/auth", authRoutes);
 app.use("/api/enquiry", enquiryRoutes);
 app.use("/api/orders", orderRoutes);
 
-// Initialize Gemini
-const API_KEY = process.env.GEMINI_API_KEY;
-if (!API_KEY) {
-  console.warn("⚠️ GEMINI_API_KEY not found in environment variables.");
+// Initialize Google Generative AI (Google AI Studio)
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+if (!GOOGLE_API_KEY) {
+  console.warn("⚠️ GOOGLE_API_KEY not found in environment variables.");
+} else {
+  console.log("🤖 Google Generative AI API Key Loaded");
 }
-console.log("🤖 Initializing Gemini AI with key starting with:", API_KEY ? API_KEY.substring(0, 5) + "..." : "MISSING");
-const genAI = new GoogleGenerativeAI(API_KEY || "");
+
+const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
+const GEMINI_MODEL_NAME = "gemma-3-4b-it"; // Using the requested Gemma 3 4B model
 
 
 const productCatalog = `
@@ -68,8 +83,10 @@ Novel Exporters Detailed Product Knowledge Base:
 - Curry Leaves: Origin: Coimbatore (TN) & Karur (TN). Harvest: Peak Mar-Jul. Quality: Cold-dried, Grade A color retention, Pesticide free.
 - Black Pepper (Tellicherry Bold): Origin: Wayanad (KL) & Nilgiris (TN). Harvest: Dec-Mar. Quality: 550-600 G/L density, <12% moisture, Machine cleaned.
 - Green Cardamom: Origin: Idukki (KL) & Munnar (KL). Harvest: Aug-Feb. Quality: 7mm-11mm bold pods, Deep green, High essential oil.
-- Cloves: Origin: Kanyakumari (TN). Harvest: Jan-Apr. Quality: Full headed buds, High volatile oil, Sun dried.
-- Nutmeg: Origin: Kottayam (KL) & Idukki (KL). Harvest: Jun-Aug. Quality: ABCD Grade, Sun dried, Natural aroma.
+- Cloves: Origin:Kanyakumari (TN). Harvest: Jan-Apr. Quality: Full headed buds, High volatile oil, Sun dried.
+- Nutmeg: Origin: Kottayam (KL) & Idukki (KL). Harvest: Jun-Aug. Quality: ABCD
+
+ Grade, Sun dried, Natural aroma.
 - Nutmeg Mace: Origin: Thrissur (KL) & Ernakulam (KL). Harvest: Jun-Aug. Quality: Red mace star pieces, Pure fragrance.
 - Kapok Buds: Origin: Theni (TN) & Dindigul (TN). Harvest: Feb-Apr. Quality: Rare indigenous variety, cooling medicinal properties.
 - Cinnamon (Malabar): Origin: Malabar Region (KL). Harvest: May-Aug. Quality: Cigar roll cut, High Cinnamaldehyde contents.
@@ -82,7 +99,7 @@ Company Mission: Sourcing 100% authentic spices directly from South Indian farms
 `;
 
 const systemInstruction = `
-You are the official AI assistant for Novel Exporters. Your goal is to provide accurate product descriptions, current export availability, and shipping enquiries based on the provided catalog.
+You are the official AI assistant for Novel Exporters, powered by the Gemma 3 4B model from Google. Your goal is to provide accurate product descriptions, current export availability, and shipping enquiries based on the provided catalog.
 ${productCatalog}
 Rules:
 1. Use only the provided catalog data.
@@ -91,13 +108,6 @@ Rules:
 4. Support multiple languages (English, German, Japanese, etc.) as requested by the client.
 5. For shipping terms, mention that we handle both Sea (Tuticorin/Kochi ports) and Air exports.
 `;
-
-// Use gemini-pro-latest as a reliable fallback
-const model = genAI.getGenerativeModel({
-  model: "gemini-pro-latest",
-  systemInstruction: systemInstruction,
-});
-console.log("✅ Gemini Model Initialized (gemini-pro-latest)");
 
 
 // Helper for Ollama Fallback
@@ -138,25 +148,37 @@ app.post("/api/chat", async (req, res) => {
     return res.status(400).json({ message: "Message is required" });
   }
 
-  // Attempt Gemini First
+  // Attempt Google Generative AI (Gemma 3 4B)
   try {
-    if (!process.env.GEMINI_API_KEY) throw new Error("API Key Missing");
+    if (!genAI) throw new Error("Google Generative AI Client not initialized (check GOOGLE_API_KEY)");
 
-    let validHistory = (history || [])
-      .filter(item => item.role === "user" || item.role === "model")
-      .map(item => ({
-        role: item.role,
-        parts: item.parts.map(p => ({ text: p.text }))
-      }));
-
-    // Remove consecutive same-role messages
-    validHistory = validHistory.filter((msg, index) => {
-      if (index === 0) return msg.role === "user"; // Must start with user
-      return msg.role !== validHistory[index - 1].role;
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODEL_NAME,
+      systemInstruction: systemInstruction
     });
 
+    // Format history for Google SDK
+    // Google expects { role: 'user' | 'model', parts: [{ text: string }] }
+    // IMPORTANT: History must start with 'user' role.
+    let chatHistory = [];
+    if (history && history.length > 0) {
+      chatHistory = history.map(msg => ({
+        role: msg.role === "assistant" || msg.role === "model" ? "model" : "user",
+        parts: [{ text: msg.parts && msg.parts[0] ? msg.parts[0].text : "" }]
+      })).filter(msg => msg.parts[0].text !== "");
+
+      // Remove leading model messages as Google AI requires history to start with 'user'
+      while (chatHistory.length > 0 && chatHistory[0].role === "model") {
+        chatHistory.shift();
+      }
+    }
+
     const chat = model.startChat({
-      history: validHistory,
+      history: chatHistory,
+      generationConfig: {
+        maxOutputTokens: 1000,
+        temperature: 0.7,
+      },
     });
 
     const result = await chat.sendMessage(message);
@@ -164,28 +186,16 @@ app.post("/api/chat", async (req, res) => {
     const text = response.text();
 
     return res.json({ text });
+
   } catch (err) {
-    console.error("❌ Gemini Error Details:", err);
-    console.warn("⚠️ Gemini primary failed:", err.message);
-
-    // Fallback: Try WITHOUT history if history caused the error
-    try {
-      if (history && history.length > 0) {
-        console.log("🔄 Attempting fallback without history...");
-        const result = await model.generateContent(message);
-        const response = await result.response;
-        return res.json({ text: response.text() });
-      }
-    } catch (fallbackErr) {
-      console.error("🔥 Secondary Gemini attempt failed:", fallbackErr.message);
-    }
-
+    console.error("❌ Google AI Error Details:", err);
+    console.warn("⚠️ Google AI primary failed:", err.message);
 
     try {
       const ollamaText = await callOllama(message, history);
       return res.json({ text: ollamaText });
     } catch (ollamaErr) {
-      console.error("🔥 Both Gemini and Ollama Failed:", ollamaErr.message);
+      console.error("🔥 Both Hugging Face and Ollama Failed:", ollamaErr.message);
       res.status(500).json({
         message: "AI services currently unavailable. Please try again later or contact support.",
         details: ollamaErr.message
@@ -194,7 +204,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// 404 JSON Handler (Prevents "Unexpected token <" on frontend)
+// 404 JSON Handler
 app.use((req, res) => {
   res.status(404).json({
     message: "Requested API endpoint not found on this server.",
@@ -202,7 +212,7 @@ app.use((req, res) => {
   });
 });
 
-// Global Error Handler (Ensures all errors return JSON, not HTML)
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error("🔥 Server Error:", err.stack);
   res.status(500).json({
@@ -223,4 +233,3 @@ app.listen(PORT, "0.0.0.0", () => {
     console.error(`❌ Server Error:`, err);
   }
 });
-

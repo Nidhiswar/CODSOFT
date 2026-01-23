@@ -16,7 +16,7 @@ const navLinks = [
 ];
 
 interface HeaderProps {
-  user?: { email: string; isAdmin: boolean } | null;
+  user?: { id: string; username: string; email: string; isAdmin: boolean; hasConsented?: boolean } | null;
   onLogout?: () => void;
 }
 
@@ -32,17 +32,18 @@ const Header = ({ user, onLogout }: HeaderProps) => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const data = await api.getTotalProductsCount();
+        const data = await api.getAnalytics(); // Changed to getAnalytics for proper admin data
         setAnalytics(data);
       } catch (err) {
         console.error("Failed to fetch analytics");
       }
     };
-    fetchAnalytics();
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchAnalytics, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    if (user?.isAdmin) {
+      fetchAnalytics();
+      const interval = setInterval(fetchAnalytics, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -113,7 +114,7 @@ const Header = ({ user, onLogout }: HeaderProps) => {
         <div className="hidden lg:flex items-center gap-3">
           <ThemeToggle />
 
-          {/* Cart Icon - Only show for logged-in users */}
+          {/* Cart Icon - Show for all logged-in users */}
           {user && (
             <Link to="/profile">
               <Button variant="ghost" size="icon" className="relative hover:bg-primary/10 transition-colors group">
@@ -123,25 +124,27 @@ const Header = ({ user, onLogout }: HeaderProps) => {
                     {totalItems}
                   </span>
                 )}
-                {/* Global Count Hover Info */}
-                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50">
-                  <div className="bg-zinc-900 text-white text-[11px] p-4 rounded-2xl whitespace-nowrap shadow-2xl border border-white/10 backdrop-blur-xl">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex justify-between gap-8 border-b border-white/5 pb-2">
-                        <span className="text-zinc-400">Total Orders So Far:</span>
-                        <span className="text-spice-gold font-black">{analytics?.totalOrders ?? "..."}</span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <span className="text-zinc-400">Most Ordered Product:</span>
-                        <div className="flex justify-between gap-4">
-                          <span className="text-primary font-bold">{analytics?.mostOrderedProduct ?? "..."}</span>
-                          <span className="bg-primary/20 text-primary px-2 rounded-full text-[9px]">{analytics?.mostOrderedCount ?? 0} units</span>
+                {/* Global Count Hover Info - Admin Only */}
+                {user.isAdmin && (
+                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50">
+                    <div className="bg-zinc-900 text-white text-[11px] p-4 rounded-2xl whitespace-nowrap shadow-2xl border border-white/10 backdrop-blur-xl">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between gap-8 border-b border-white/5 pb-2">
+                          <span className="text-zinc-400">Total Orders So Far:</span>
+                          <span className="text-spice-gold font-black">{analytics?.totalOrders ?? "..."}</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-zinc-400">Most Ordered Product:</span>
+                          <div className="flex justify-between gap-4">
+                            <span className="text-primary font-bold">{analytics?.mostOrderedProduct ?? "..."}</span>
+                            <span className="bg-primary/20 text-primary px-2 rounded-full text-[9px]">{analytics?.mostOrderedCount ?? 0} units</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+                    <div className="w-3 h-3 bg-zinc-900 rotate-45 -mt-1.5 border-l border-t border-white/10" />
                   </div>
-                  <div className="w-3 h-3 bg-zinc-900 rotate-45 -mt-1.5 border-l border-t border-white/10" />
-                </div>
+                )}
               </Button>
             </Link>
           )}

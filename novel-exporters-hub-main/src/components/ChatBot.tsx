@@ -73,7 +73,7 @@ const ChatBot = () => {
             } else if (error.message.includes("Unexpected token") || error.message.includes("invalid response")) {
                 userFriendlyMessage = "Integration Error: The backend returned an invalid response. Please stop all processes and run 'START_INTEGRATED_APP.bat'.";
             } else if (error.message === "Failed to fetch") {
-                userFriendlyMessage = "Connection Error: Backend server not reachable at http://127.0.0.1:5008. Please ensure 'node server.js' is running.";
+                userFriendlyMessage = "Connection Error: Backend server not reachable at http://127.0.0.1:5009. Please ensure 'node server.js' is running.";
             }
 
             const errorMessage: Message = {
@@ -225,7 +225,7 @@ const ChatBot = () => {
                                 </Button>
                             </form>
                             <p className="text-[10px] text-center text-muted-foreground mt-4 font-medium uppercase tracking-tighter">
-                                Powered by Gemini 2.0 • Novel Exporters Intelligence
+                                Powered by Google Gemma 3 4B • Novel Exporters Intelligence
                             </p>
                         </div>
                     </motion.div>

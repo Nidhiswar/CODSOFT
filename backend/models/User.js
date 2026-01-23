@@ -9,6 +9,12 @@ const UserSchema = new mongoose.Schema({
     resetPasswordToken: String,
     resetPasswordExpires: Date,
     cart: { type: Array, default: [] },
+    hasConsented: { type: Boolean, default: false },
+    consentDetails: {
+        version: { type: String, default: "1.0.0" },
+        timestamp: { type: Date },
+        ipAddress: { type: String }
+    },
     createdAt: { type: Date, default: Date.now },
 });
 

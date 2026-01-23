@@ -1,18 +1,21 @@
-# Welcome to your Lovable project
+# Novel Exporters - Premium Spices Export Platform
 
-## Project info
+## Project Overview
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+This is the official web platform for Novel Exporters, a premium spices export company based in Tamil Nadu, India.
 
-## How can I edit this code?
+**Website**: Novel Exporters Hub
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
+- 🌶️ Product Catalog with detailed spice information
+- 📧 Customer Enquiry System
+- 🛒 Order Management (Admin)
+- 👤 User Authentication & Profiles
+- 💬 AI-Powered Chatbot Assistant
+- 🌍 Multi-language Support
+- 📱 Responsive Design
+- 🔒 Privacy Policy & Terms of Service
 
 **Use your preferred IDE**
 

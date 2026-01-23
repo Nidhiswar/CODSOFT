@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import { products } from "@/data/products";
 import { ArrowRight, Leaf, Globe, Award, Truck } from "lucide-react";
+import Certifications from "@/components/Certifications";
 
 const Home = () => {
   const curry = products.find(p => p.id === 'curry-leaves');
@@ -86,9 +87,6 @@ const Home = () => {
         <div className="container-custom">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6 animate-slide-in">
-              <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                About Us
-              </span>
               <h2 className="text-3xl md:text-4xl font-bold font-serif text-foreground">
                 Crafting Excellence in Every Grain
               </h2>
@@ -158,6 +156,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Certifications Section */}
+      <Certifications />
 
       {/* CTA Section */}
       <section className="section-padding gradient-hero relative overflow-hidden">

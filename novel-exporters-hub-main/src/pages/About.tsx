@@ -1,4 +1,5 @@
 import { CheckCircle, Users, Globe, Award, Target, Heart, Plane, Box, ShieldCheck } from "lucide-react";
+import Certifications from "@/components/Certifications";
 import novelLogo from "@/assets/novel-logo-dynamic.png";
 import ourStoryImg from "@/assets/our-story.jpg";
 import airExportImg from "@/assets/air-export.jpg";
@@ -114,6 +115,11 @@ const About = () => {
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors duration-500" />
+
+                {/* Logo Overlay */}
+                <div className="absolute top-6 left-6 p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-xl border border-white/20 transform -rotate-3 transition-transform group-hover:rotate-0">
+                  <img src={novelLogo} alt="Novel Exporters" className="h-8 w-auto object-contain" />
+                </div>
               </div>
             </div>
           </div>
@@ -132,6 +138,11 @@ const About = () => {
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
+
+                {/* Logo Overlay */}
+                <div className="absolute bottom-6 left-6 p-2 md:p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-xl border border-white/20 transform rotate-3 transition-transform group-hover:rotate-0">
+                  <img src={novelLogo} alt="Novel Exporters" className="h-6 md:h-8 w-auto object-contain" />
+                </div>
 
                 <div className="absolute top-1/2 -right-12 -translate-y-1/2 hidden lg:block">
                   <div className="bg-white dark:bg-zinc-800 p-8 rounded-[2rem] shadow-2xl border border-zinc-200 dark:border-white/10 max-w-xs space-y-4">
@@ -173,6 +184,9 @@ const About = () => {
           </div>
         </div>
       </section>
+
+      {/* Certifications Section */}
+      <Certifications />
 
       {/* Mission & Vision */}
       <section className="section-padding bg-muted">

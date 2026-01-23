@@ -32,7 +32,7 @@ router.post("/register", async (req, res) => {
         await user.save();
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-        res.json({ token, user: { id: user._id, username, email, role: user.role, cart: user.cart } });
+        res.json({ token, user: { id: user._id, username, email, role: user.role, cart: user.cart, hasConsented: user.hasConsented } });
     } catch (err) {
         res.status(500).json({ message: "Server error" });
     }
@@ -51,7 +51,7 @@ router.post("/login", async (req, res) => {
         if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-        res.json({ token, user: { id: user._id, username: user.username, email: user.email, role: user.role, cart: user.cart } });
+        res.json({ token, user: { id: user._id, username: user.username, email: user.email, role: user.role, cart: user.cart, hasConsented: user.hasConsented } });
     } catch (err) {
         res.status(500).json({ message: "Server error" });
     }
@@ -128,6 +128,28 @@ router.post("/reset-password/:token", async (req, res) => {
 router.get("/me", auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select("-password");
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+// Update Consent Status
+router.post("/consent", auth, async (req, res) => {
+    const { version, ipAddress } = req.body;
+    try {
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            {
+                hasConsented: true,
+                consentDetails: {
+                    version: version || "1.0.0",
+                    timestamp: new Date(),
+                    ipAddress: ipAddress || req.ip
+                }
+            },
+            { new: true }
+        ).select("-password");
         res.json(user);
     } catch (err) {
         res.status(500).json({ message: "Server error" });

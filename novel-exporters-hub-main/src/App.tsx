@@ -17,17 +17,135 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import ConsentRequired from "./pages/ConsentRequired";
 import { api } from "./lib/api";
+import ConsentOverlay from "./components/ConsentOverlay";
 
 import { CartProvider } from "./hooks/useCart";
 
 const queryClient = new QueryClient();
 
 interface User {
+  id: string;
+  username: string;
   email: string;
   isAdmin: boolean;
   role?: string;
+  hasConsented?: boolean;
 }
+
+const AppContent = ({ user, setUser, handleLogout, handleLogin, handleConsentAccept }: any) => {
+  return (
+    <BrowserRouter>
+      {user && !user.hasConsented && !user.isAdmin && (
+        <ConsentOverlay
+          onAccept={handleConsentAccept}
+          onDecline={() => {
+            handleLogout();
+            window.location.href = "/consent-required";
+          }}
+        />
+      )}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Layout user={user} onLogout={handleLogout}>
+              <Home />
+            </Layout>
+          }
+        />
+        <Route
+          path="/about"
+          element={
+            <Layout user={user} onLogout={handleLogout}>
+              <About />
+            </Layout>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <Layout user={user} onLogout={handleLogout}>
+              <Products user={user} />
+            </Layout>
+          }
+        />
+        <Route
+          path="/contact"
+          element={
+            <Layout user={user} onLogout={handleLogout}>
+              <Contact />
+            </Layout>
+          }
+        />
+        <Route
+          path="/enquiry"
+          element={
+            <Layout user={user} onLogout={handleLogout}>
+              <Enquiry />
+            </Layout>
+          }
+        />
+        <Route
+          path="/login"
+          element={<Login onLogin={handleLogin} />}
+        />
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+        <Route
+          path="/reset-password/:token"
+          element={<ResetPassword />}
+        />
+        <Route
+          path="/profile"
+          element={
+            <Layout user={user} onLogout={handleLogout}>
+              <Profile user={user} onLogout={handleLogout} />
+            </Layout>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            user?.isAdmin ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <AdminDashboard />
+              </Layout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/privacy-policy"
+          element={
+            <Layout user={user} onLogout={handleLogout}>
+              <PrivacyPolicy />
+            </Layout>
+          }
+        />
+        <Route
+          path="/terms-of-service"
+          element={
+            <Layout user={user} onLogout={handleLogout}>
+              <TermsOfService />
+            </Layout>
+          }
+        />
+        <Route
+          path="/consent-required"
+          element={<ConsentRequired />}
+        />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
 
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -69,6 +187,23 @@ const App = () => {
     localStorage.removeItem("cart");
   };
 
+  const handleConsentAccept = async () => {
+    try {
+      const updatedUser = await api.recordConsent({ version: "1.0.0" });
+      if (updatedUser && updatedUser._id) {
+        setUser({
+          ...updatedUser,
+          id: updatedUser._id,
+          isAdmin: updatedUser.role === 'admin' && updatedUser.email.endsWith('@novelexporters.com')
+        });
+        // Redirect to products page after successful consent
+        window.location.href = "/products";
+      }
+    } catch (err) {
+      console.error("Failed to record consent:", err);
+    }
+  };
+
   if (loading) return null;
 
   return (
@@ -78,83 +213,13 @@ const App = () => {
           <Toaster />
           <Sonner />
           <CartProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <Layout user={user} onLogout={handleLogout}>
-                      <Home />
-                    </Layout>
-                  }
-                />
-                <Route
-                  path="/about"
-                  element={
-                    <Layout user={user} onLogout={handleLogout}>
-                      <About />
-                    </Layout>
-                  }
-                />
-                <Route
-                  path="/products"
-                  element={
-                    <Layout user={user} onLogout={handleLogout}>
-                      <Products user={user} />
-                    </Layout>
-                  }
-                />
-                <Route
-                  path="/contact"
-                  element={
-                    <Layout user={user} onLogout={handleLogout}>
-                      <Contact />
-                    </Layout>
-                  }
-                />
-                <Route
-                  path="/enquiry"
-                  element={
-                    <Layout user={user} onLogout={handleLogout}>
-                      <Enquiry />
-                    </Layout>
-                  }
-                />
-                <Route
-                  path="/login"
-                  element={<Login onLogin={handleLogin} />}
-                />
-                <Route
-                  path="/forgot-password"
-                  element={<ForgotPassword />}
-                />
-                <Route
-                  path="/reset-password/:token"
-                  element={<ResetPassword />}
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <Layout user={user} onLogout={handleLogout}>
-                      <Profile user={user} onLogout={handleLogout} />
-                    </Layout>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    user?.isAdmin ? (
-                      <Layout user={user} onLogout={handleLogout}>
-                        <AdminDashboard />
-                      </Layout>
-                    ) : (
-                      <Navigate to="/login" />
-                    )
-                  }
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
+            <AppContent
+              user={user}
+              setUser={setUser}
+              handleLogout={handleLogout}
+              handleLogin={handleLogin}
+              handleConsentAccept={handleConsentAccept}
+            />
           </CartProvider>
         </TooltipProvider>
       </QueryClientProvider>

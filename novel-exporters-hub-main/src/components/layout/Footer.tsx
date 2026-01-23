@@ -54,30 +54,55 @@ const Footer = () => {
             <h4 className="text-lg font-bold font-serif text-zinc-900 dark:text-white mb-6">Contact Us</h4>
             <ul className="space-y-5">
               <li className="flex items-start gap-4 group">
-                <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 shadow-sm flex items-center justify-center shrink-0 group-hover:bg-spice-gold group-hover:text-black transition-all">
+                <a
+                  href="mailto:internationalsupport@novelexporters.com"
+                  className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 shadow-sm flex items-center justify-center shrink-0 group-hover:bg-spice-gold group-hover:text-black transition-all cursor-pointer"
+                >
                   <Mail className="w-5 h-5" />
-                </div>
+                </a>
                 <div className="space-y-1">
-                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em] font-black">Email</span>
-                  <p className="text-zinc-800 dark:text-zinc-300 text-sm font-semibold break-all">internationalsupport@novelexporters.com</p>
+                  <a
+                    href="mailto:internationalsupport@novelexporters.com"
+                    className="text-zinc-800 dark:text-zinc-300 text-sm font-semibold break-all hover:text-spice-gold transition-colors"
+                  >
+                    internationalsupport@novelexporters.com
+                  </a>
                 </div>
               </li>
               <li className="flex items-start gap-4 group">
-                <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 shadow-sm flex items-center justify-center shrink-0 group-hover:bg-spice-gold group-hover:text-black transition-all">
+                <a
+                  href="tel:+918012804316"
+                  className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 shadow-sm flex items-center justify-center shrink-0 group-hover:bg-spice-gold group-hover:text-black transition-all cursor-pointer"
+                >
                   <Phone className="w-5 h-5" />
-                </div>
+                </a>
                 <div className="space-y-1">
-                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em] font-black">Phone</span>
-                  <p className="text-zinc-800 dark:text-zinc-300 text-sm font-semibold">+91 80128 04316</p>
+                  <a
+                    href="tel:+918012804316"
+                    className="text-zinc-800 dark:text-zinc-300 text-sm font-semibold hover:text-spice-gold transition-colors"
+                  >
+                    +91 80128 04316
+                  </a>
                 </div>
               </li>
               <li className="flex items-start gap-4 group">
-                <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 shadow-sm flex items-center justify-center shrink-0 group-hover:bg-spice-gold group-hover:text-black transition-all">
+                <a
+                  href="https://www.google.com/maps/search/Novel+Exporters,+2/202-C,+Dhanam+Nagar,+Mylampatti,+Coimbatore+-+641062"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 shadow-sm flex items-center justify-center shrink-0 group-hover:bg-spice-gold group-hover:text-black transition-all cursor-pointer"
+                >
                   <MapPin className="w-5 h-5" />
-                </div>
+                </a>
                 <div className="space-y-1">
-                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em] font-black">Address</span>
-                  <p className="text-zinc-800 dark:text-zinc-300 text-sm font-semibold">Coimbatore, Tamil Nadu, India</p>
+                  <a
+                    href="https://www.google.com/maps/search/Novel+Exporters,+2/202-C,+Dhanam+Nagar,+Mylampatti,+Coimbatore+-+641062"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-zinc-800 dark:text-zinc-300 text-sm font-semibold hover:text-spice-gold transition-colors"
+                  >
+                    Novel Exporters, 2/202-C, Dhanam Nagar, Mylampatti, Coimbatore - 641062
+                  </a>
                 </div>
               </li>
             </ul>
@@ -109,10 +134,10 @@ const Footer = () => {
             © {new Date().getFullYear()} <span className="text-zinc-800 dark:text-zinc-300 font-bold">Novel Exporters</span>. All rights reserved.
           </p>
           <div className="flex gap-8">
-            <Link to="#" className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white text-sm transition-colors hover:underline underline-offset-4">
+            <Link to="/privacy-policy" className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white text-sm transition-colors hover:underline underline-offset-4">
               Privacy Policy
             </Link>
-            <Link to="#" className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white text-sm transition-colors hover:underline underline-offset-4">
+            <Link to="/terms-of-service" className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white text-sm transition-colors hover:underline underline-offset-4">
               Terms of Service
             </Link>
           </div>

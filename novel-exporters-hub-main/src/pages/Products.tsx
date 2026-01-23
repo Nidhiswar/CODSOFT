@@ -289,46 +289,6 @@ const Products = ({ user }: { user: any }) => {
         </div>
       </section>
 
-      {/* Certifications Banner - Enhanced & Eye-Catchy */}
-      <section className="py-24 bg-gradient-to-b from-zinc-950 to-black border-y border-white/5 overflow-hidden relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(196,160,82,0.05),transparent_70%)]" />
-
-        <div className="container-custom mb-12 text-center relative z-10">
-          <span className="text-spice-gold text-xs font-black uppercase tracking-[0.3em] mb-4 block">Quality Guaranteed</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Global Export Accreditations</h2>
-          <div className="h-1 w-20 bg-spice-gold mx-auto rounded-full" />
-        </div>
-
-        <div className="flex whitespace-nowrap animate-infinite-scroll relative z-10">
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="flex items-center gap-20 mx-10">
-              <div className="flex flex-col items-center group cursor-pointer px-8 py-6 rounded-3xl hover:bg-white/5 transition-all duration-500 border border-transparent hover:border-white/10">
-                <div className="w-16 h-16 mb-4 rounded-2xl bg-spice-gold/10 flex items-center justify-center border border-spice-gold/20 group-hover:scale-110 transition-transform">
-                  <CheckCircle className="w-8 h-8 text-spice-gold" />
-                </div>
-                <span className="text-2xl md:text-3xl font-serif text-white/90 tracking-widest font-black italic transition-all group-hover:text-spice-gold">FSSAI APPROVED</span>
-                <p className="text-[10px] text-zinc-500 mt-2 font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity">Food Safety Standards</p>
-              </div>
-
-              <div className="flex flex-col items-center group cursor-pointer px-8 py-6 rounded-3xl hover:bg-white/5 transition-all duration-500 border border-transparent hover:border-white/10">
-                <div className="w-16 h-16 mb-4 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:scale-110 transition-transform">
-                  <ScrollText className="w-8 h-8 text-primary" />
-                </div>
-                <span className="text-2xl md:text-3xl font-serif text-white/90 tracking-widest font-black italic transition-all group-hover:text-primary">ISO 22000 CERTIFIED</span>
-                <p className="text-[10px] text-zinc-500 mt-2 font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity">International Quality Management</p>
-              </div>
-
-              <div className="flex flex-col items-center group cursor-pointer px-8 py-6 rounded-3xl hover:bg-white/5 transition-all duration-500 border border-transparent hover:border-white/10">
-                <div className="w-16 h-16 mb-4 rounded-2xl bg-spice-gold/10 flex items-center justify-center border border-spice-gold/20 group-hover:scale-110 transition-transform">
-                  <MapPin className="w-8 h-8 text-spice-gold" />
-                </div>
-                <span className="text-2xl md:text-3xl font-serif text-white/90 tracking-widest font-black italic transition-all group-hover:text-spice-gold">IEC CERTIFIED</span>
-                <p className="text-[10px] text-zinc-500 mt-2 font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity">Import Export Code Authorized</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 };
