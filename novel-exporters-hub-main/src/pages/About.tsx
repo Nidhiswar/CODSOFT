@@ -4,9 +4,11 @@ import novelLogo from "@/assets/novel-logo-dynamic.png";
 import ourStoryImg from "@/assets/our-story.jpg";
 import airExportImg from "@/assets/air-export.jpg";
 import airExportV2 from "@/assets/air-export-v2.png";
-import packedGoodsImg from "@/assets/packed-goods-export.png";
+import novelPackImg from "@/assets/novel-pack.jpg";
+import packedimage from "@/assets/packed.png";
+import ap_1 from "@/assets/ap-1.png";
 
-const About = () => {
+function About() {
   return (
     <div className="overflow-hidden bg-background text-foreground">
       {/* Hero Section */}
@@ -107,79 +109,77 @@ const About = () => {
               </ul>
             </div>
 
-            <div className="order-1 lg:order-2">
+            <div className="order-1 lg:order-2 space-y-6">
               <div className="rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
                 <img
-                  src={packedGoodsImg}
-                  alt="Airtight packaging in production with Novel Exporters logo"
+                  src={packedimage}
+                  alt="Airtight packaging with Novel Exporters logo"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors duration-500" />
-
-                {/* Logo Overlay */}
-                <div className="absolute top-6 left-6 p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-xl border border-white/20 transform -rotate-3 transition-transform group-hover:rotate-0">
-                  <img src={novelLogo} alt="Novel Exporters" className="h-8 w-auto object-contain" />
-                </div>
+                <div className="absolute inset-0 bg-black/12 group-hover:bg-black/0 transition-colors duration-500" />
               </div>
+              {/* <div className="rounded-[2rem] overflow-hidden shadow-xl relative group">
+                  <img
+                    src={novelPackImg}
+                    alt="Novel Exporters Premium Spice Packaging"
+                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/8 group-hover:bg-black/0 transition-colors duration-500" />
+                </div> */}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Air Export Priority Section */}
-      <section className="section-padding bg-background overflow-hidden">
+      {/* Logistics Prowess Section with Image */}
+      <section className="section-padding bg-zinc-50 dark:bg-zinc-900/50 overflow-hidden">
         <div className="container-custom">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="relative">
+            <div className="relative group order-2 lg:order-1">
               <div className="rounded-[2.5rem] overflow-hidden shadow-2xl relative h-[500px]">
                 <img
-                  src={airExportV2}
-                  alt="Modern Air Export with Novel Exporters Goods"
+                  src={ap_1}
+                  alt="Logistics Prowess - Aircraft Loading Operations"
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
 
                 {/* Logo Overlay */}
                 <div className="absolute bottom-6 left-6 p-2 md:p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-xl border border-white/20 transform rotate-3 transition-transform group-hover:rotate-0">
                   <img src={novelLogo} alt="Novel Exporters" className="h-6 md:h-8 w-auto object-contain" />
                 </div>
-
-                <div className="absolute top-1/2 -right-12 -translate-y-1/2 hidden lg:block">
-                  <div className="bg-white dark:bg-zinc-800 p-8 rounded-[2rem] shadow-2xl border border-zinc-200 dark:border-white/10 max-w-xs space-y-4">
-                    <Plane className="w-12 h-12 text-primary mb-2" />
-                    <h4 className="text-xl font-bold">Express Air Freight</h4>
-                    <p className="text-sm text-zinc-500">Fast-track delivery for urgent and high-value consignments globally.</p>
-                  </div>
-                </div>
               </div>
             </div>
 
-            <div className="space-y-8 ml-0 lg:ml-12">
+            <div className="space-y-8 order-1 lg:order-2">
               <span className="inline-block px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-widest">
                 Logistics Prowess
               </span>
               <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight">
-                Global Priority Shipping
+                Efficient Global Freight Operations
               </h2>
               <div className="space-y-6 text-lg text-muted-foreground font-light leading-relaxed">
                 <p>
-                  Recognizing the delicate nature of fresh curry leaves and premium spice extracts, we offer <span className="text-primary font-bold">Priority Air Export</span> services. This ensures that your products reach their destination in the shortest possible time, maintaining their sensory profile and potency.
+                  Our state-of-the-art logistics network ensures <span className="text-primary font-bold">rapid and reliable</span> delivery of premium spices worldwide. With partnerships at major ports (Tuticorin & Kochi), we offer both air and sea export options tailored to your timeline and budget.
                 </p>
                 <p>
-                  Our logistics team coordinates with major international carriers to provide real-time tracking, temperature control (where required), and seamless customs clearance, taking the stress out of your supply chain.
+                  Every shipment is tracked in real-time, handled with temperature control, and cleared through customs with complete documentation. Your products arrive fresh, authentic, and ready for market.
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center gap-2 bg-zinc-100 dark:bg-white/5 py-2 px-4 rounded-xl">
-                  <CheckCircle className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-bold">48-72 Hour Delivery</span>
-                </div>
-                <div className="flex items-center gap-2 bg-zinc-100 dark:bg-white/5 py-2 px-4 rounded-xl">
-                  <CheckCircle className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-bold">Full Traceability</span>
-                </div>
-              </div>
+              <ul className="grid sm:grid-cols-2 gap-4">
+                {[
+                  { icon: Plane, text: "48-72h Air Export" },
+                  { icon: Box, text: "Sea Freight Options" },
+                  { icon: Globe, text: "Global Coverage" },
+                  { icon: CheckCircle, text: "Real-time Tracking" },
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/5">
+                    <item.icon className="w-5 h-5 text-primary" />
+                    <span className="font-bold text-sm text-foreground">{item.text}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
@@ -224,7 +224,7 @@ const About = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
             {[
               { value: "10+", label: "Years Experience" },
-              { value: "50+", label: "Countries Served" },
+              { value: "15+", label: "Countries Served" },
               { value: "500+", label: "Happy Clients" },
               { value: "1000+", label: "Tons Exported" },
             ].map((stat, index) => (
@@ -238,6 +238,6 @@ const About = () => {
       </section>
     </div>
   );
-};
 
+};
 export default About;

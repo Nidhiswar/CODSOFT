@@ -5,14 +5,18 @@ import { products, Product } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Calendar, ScrollText, CheckCircle, ArrowRight, Check } from "lucide-react";
+import { useCart } from "@/hooks/useCart";
+import { toast } from "sonner";
 import airExportImg from "@/assets/air-export.jpg";
 
 const categories = ["All", "Leaves", "Seeds", "Bark", "Flowers"];
 
 const Products = ({ user }: { user: any }) => {
   const navigate = useNavigate();
+  const { addToCart } = useCart();
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
 
   const filteredProducts =
     activeCategory === "All"
@@ -103,19 +107,26 @@ const Products = ({ user }: { user: any }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
               onClick={() => setSelectedProduct(null)}
-              className="fixed inset-0 bg-zinc-950/80 backdrop-blur-md z-[100]"
+              className="fixed inset-0 bg-zinc-950/85 backdrop-blur-xl z-[100]"
             />
 
             {/* Expanded Card */}
             <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 md:p-8 pointer-events-none">
               <motion.div
                 layoutId={`card-container-${selectedProduct.id}`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-                className="w-full max-w-6xl h-full max-h-[85vh] bg-white dark:bg-zinc-900 overflow-hidden rounded-[2.5rem] shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/20 pointer-events-auto flex flex-col md:flex-row"
+                initial={{ opacity: 0, scale: 0.8, y: 40 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: 30 }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 28,
+                  mass: 0.8,
+                  opacity: { duration: 0.15 }
+                }}
+                className="w-full max-w-6xl h-full max-h-[85vh] bg-white dark:bg-zinc-900 overflow-hidden rounded-[2.5rem] shadow-[0_0_120px_rgba(196,160,82,0.15)] border border-spice-gold/20 pointer-events-auto flex flex-col md:flex-row"
               >
                 {/* Image Section */}
                 <div className="md:w-1/2 h-1/2 md:h-full relative overflow-hidden bg-black flex shrink-0">
@@ -137,7 +148,12 @@ const Products = ({ user }: { user: any }) => {
                 </div>
 
                 {/* Details Section */}
-                <div className="md:w-1/2 h-1/2 md:h-full overflow-y-auto p-8 md:p-12 bg-white/5 backdrop-blur-3xl relative">
+                <motion.div 
+                  className="md:w-1/2 h-1/2 md:h-full overflow-y-auto p-8 md:p-12 bg-white/5 backdrop-blur-3xl relative"
+                  initial={{ opacity: 0, x: 30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1, duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                >
                   <div className="flex justify-between items-start mb-8">
                     <div className="space-y-1">
                       <motion.h2
@@ -155,9 +171,9 @@ const Products = ({ user }: { user: any }) => {
                     </div>
                     <button
                       onClick={() => setSelectedProduct(null)}
-                      className="p-3 rounded-2xl bg-zinc-100 dark:bg-white/5 hover:bg-primary/20 transition-colors group"
+                      className="p-3 rounded-2xl bg-zinc-100 dark:bg-white/10 hover:bg-spice-gold/20 hover:scale-110 active:scale-95 transition-all duration-150 group"
                     >
-                      <X className="w-6 h-6 text-foreground group-hover:rotate-90 transition-transform duration-300" />
+                      <X className="w-6 h-6 text-foreground group-hover:rotate-90 group-hover:text-spice-gold transition-all duration-150" />
                     </button>
                   </div>
 
@@ -217,16 +233,63 @@ const Products = ({ user }: { user: any }) => {
                     </div>
                   </div>
 
-                  <div className="mt-12">
+                  {/* Add to Cart Button */}
+                  <div className="mt-8">
+                    <Button
+                      variant="default"
+                      className={`w-full py-4 text-lg font-bold tracking-wide transition-all duration-300 ${isAddedToCart ? 'bg-green-600 hover:bg-green-600' : ''}`}
+                      onClick={() => {
+                        if (selectedProduct) {
+                          addToCart(selectedProduct);
+                          setIsAddedToCart(true);
+                          toast.success(`Added ${selectedProduct.name} to cart`);
+                          setTimeout(() => setIsAddedToCart(false), 2000);
+                        }
+                      }}
+                    >
+                      {isAddedToCart ? (
+                        <>
+                          <Check className="w-5 h-5 mr-2" />
+                          Added to Cart
+                        </>
+                      ) : (
+                        'Add to Cart'
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Special Instructions */}
+                  <div className="mt-4">
+                    <textarea
+                      className="w-full p-4 rounded-lg border border-zinc-200 dark:border-white/10 bg-white/5 text-sm text-foreground"
+                      placeholder="Add special instructions for this order..."
+                    ></textarea>
+                  </div>
+
+                  {/* Delivery Date Picker */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-bold mb-2">Preferred Delivery Date:</label>
+                    <input
+                      type="date"
+                      className="w-full p-4 rounded-lg border border-zinc-200 dark:border-white/10 bg-white/5 text-sm text-foreground"
+                    />
+                  </div>
+
+                  <motion.div 
+                    className="mt-12"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.2 }}
+                  >
                     <Button
                       onClick={() => !user ? navigate("/login") : navigate("/profile")}
-                      className="w-full h-16 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-black font-black uppercase tracking-widest hover:scale-[1.02] transition-transform shadow-2xl"
+                      className="w-full h-16 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-black font-black uppercase tracking-widest hover:scale-[1.03] active:scale-[0.98] transition-all duration-150 shadow-2xl hover:shadow-spice-gold/20"
                     >
                       {user ? "Request Quotation" : "Login to Request Quote"}
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               </motion.div>
             </div>
           </>

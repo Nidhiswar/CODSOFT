@@ -23,15 +23,32 @@ if (!MONGODB_URI) {
   console.error("❌ MONGODB_URI is not defined in .env file");
 }
 
+console.log("Mongo URI loaded:", !!process.env.MONGODB_URI);
+
+
 mongoose.connect(MONGODB_URI, {
   serverSelectionTimeoutMS: 5000,
   family: 4,
 })
-  .then(() => console.log("🚀 MongoDB Integrated Successfully"))
-  .catch(err => {
-    console.error("❌ MongoDB Connection Error:", err.message);
-    console.log("⚠️ Continuing without MongoDB... (Login/Orders will fail, but Chat might work)");
+.then(() => {
+  console.log("🚀 MongoDB Integrated Successfully");
+
+  app.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
   });
+})
+.catch(err => {
+  console.error("❌ MongoDB Connection Error:", err.message);
+  process.exit(1); // 🔴 STOP the server
+});
+
+mongoose.connection.on("error", err => {
+  console.error("❌ MongoDB Runtime Error:", err);
+});
+
+mongoose.connection.on("disconnected", () => {
+  console.warn("⚠️ MongoDB disconnected");
+});
 
 
 app.use(cors());
@@ -46,6 +63,30 @@ app.get("/", (req, res) => {
     message: "Novel Exporters Backend Server is running.",
     endpoints: {
       health: "/api",
+      chat: "/api/chat",
+      healthDetail: "/api/health"
+    }
+  });
+});
+
+// Detailed health check (helps diagnose AI service issues)
+app.get("/api/health", (req, res) => {
+  const googleKeyConfigured = !!process.env.GOOGLE_API_KEY;
+  const mongoConnected = require("mongoose").connection.readyState === 1;
+  
+  res.json({
+    status: mongoConnected ? "Healthy" : "Degraded",
+    backend: "Active",
+    version: "2.0.0",
+    services: {
+      mongodb: mongoConnected ? "Connected" : "Disconnected",
+      googleAI: googleKeyConfigured ? "Configured" : "Missing GOOGLE_API_KEY",
+      ollama: "Check http://127.0.0.1:11434 manually"
+    },
+    endpoints: {
+      auth: "/api/auth",
+      enquiry: "/api/enquiry",
+      orders: "/api/orders",
       chat: "/api/chat"
     }
   });
@@ -103,43 +144,63 @@ You are the official AI assistant for Novel Exporters, powered by the Gemma 3 4B
 ${productCatalog}
 Rules:
 1. Use only the provided catalog data.
-2. If you don't know an answer, provide the contact email: internationalsupport@novelexporters.com or +91 80128 04316.
+2. If you don't know an answer, provide the contact email: novelexporters@gmail.com or +91 80128 04316.
 3. Maintain a professional, premium, and trustworthy tone.
 4. Support multiple languages (English, German, Japanese, etc.) as requested by the client.
 5. For shipping terms, mention that we handle both Sea (Tuticorin/Kochi ports) and Air exports.
 `;
 
 
-// Helper for Ollama Fallback
-async function callOllama(message, history) {
-  try {
-    const formattedHistory = (history || []).map(h => ({
-      role: h.role === "model" ? "assistant" : h.role,
-      content: h.parts[0].text
-    }));
-
-    const response = await fetch("http://127.0.0.1:11434/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "gemma3:4b",
-        messages: [
-          { role: "system", content: systemInstruction },
-          ...formattedHistory,
-          { role: "user", content: message }
-        ],
-        stream: false
-      })
-    });
-
-    if (!response.ok) throw new Error(`Ollama Error: ${response.statusText}`);
-    const data = await response.json();
-    return data.message.content;
-  } catch (err) {
-    console.error("❌ Ollama Fallback Failed:", err.message);
-    throw err;
+// Built-in Fallback: Simple response handler based on product catalog
+function buildInChatResponse(message) {
+  const msg = message.toLowerCase();
+  
+  // Spice inquiries
+  if (msg.includes("curry leaves") || msg.includes("curry leaf")) {
+    return "🌿 **Curry Leaves** – Fresh & Aromatic\n\nOrigin: Coimbatore & Karur (Tamil Nadu)\nHarvest Peak: March–July\n\nOur curry leaves are cold-dried to preserve vibrant color and authentic aroma. Grade A quality, pesticide-free, perfect for international markets.\n\n📦 Available in bulk for export. Contact: novelexporters@gmail.com";
   }
+  
+  if (msg.includes("black pepper") || msg.includes("pepper")) {
+    return "🌶️ **Black Pepper – Tellicherry Bold**\n\nOrigin: Wayanad, Kerala & Nilgiris, Tamil Nadu\nHarvest: December–March\n\nPremium grade with 550–600 G/L density, <12% moisture, machine-cleaned. Ideal for spice blends and premium exports.\n\n📞 Call: +91 80128 04316";
+  }
+  
+  if (msg.includes("cardamom") || msg.includes("green cardamom")) {
+    return "💚 **Green Cardamom – Bold Pods**\n\nOrigin: Idukki & Munnar (Kerala)\nHarvest: August–February\n\n7–11mm bold pods with deep green color and high essential oil content. Premium quality for global markets.\n\n💌 Email: novelexporters@gmail.com";
+  }
+  
+  if (msg.includes("clove")) {
+    return "🔴 **Cloves – Full-Headed Buds**\n\nOrigin: Kanyakumari (Tamil Nadu)\nHarvest: January–April\n\nSun-dried with high volatile oil content. Perfect for seasoning and premium spice formulations.\n\n🌐 Exports via Tuticorin & Kochi ports";
+  }
+  
+  if (msg.includes("cinnamon") || msg.includes("malabar")) {
+    return "🤎 **Cinnamon – Malabar Grade**\n\nOrigin: Malabar Region (Kerala)\nHarvest: May–August\n\nCigar roll cut with high cinnamaldehyde content. Premium quality certified.\n\n✨ ISO 22000 & FSSAI certified";
+  }
+  
+  if (msg.includes("nutmeg")) {
+    return "🟤 **Nutmeg & Mace**\n\nOrigin: Kottayam & Idukki (Kerala)\nHarvest: June–August\n\nABCD Grade, sun-dried with natural aroma. Mace star pieces available separately.\n\n🎁 Quality guaranteed for global export";
+  }
+  
+  // General inquiries
+  if (msg.includes("export") || msg.includes("shipping") || msg.includes("logistics")) {
+    return "🚢 **Our Export & Logistics**\n\n✈️ **Air Export:** 48-72 hour priority delivery worldwide\n🚢 **Sea Export:** Via Tuticorin & Kochi ports\n✅ Full traceability, real-time tracking\n🛡️ Temperature control & customs clearance included\n\nFor bulk orders: novelexporters@gmail.com";
+  }
+  
+  if (msg.includes("certification") || msg.includes("quality") || msg.includes("standard")) {
+    return "🏆 **Our Certifications & Quality Standards**\n\n✓ FSSAI (Food Safety – India)\n✓ ISO 22000 (Food Safety Management)\n✓ IEC (International Export Compliance)\n✓ 100% pesticide-free, naturally sourced\n✓ Rigorous testing at every stage\n\n👨‍🌾 Sourced directly from verified South Indian farms";
+  }
+  
+  if (msg.includes("price") || msg.includes("cost") || msg.includes("quote")) {
+    return "💰 **Pricing & Quotations**\n\nOur prices vary based on:\n• Product grade & quantity\n• Shipping method (air vs. sea)\n• Seasonal availability\n\n📧 For custom quotes: novelexporters@gmail.com\n📞 Phone: +91 80128 04316\n\nWe offer competitive rates for bulk orders!";
+  }
+  
+  if (msg.includes("contact") || msg.includes("support") || msg.includes("help")) {
+    return "📞 **Contact Novel Exporters**\n\n📧 Email: novelexporters@gmail.com\n☎️ Phone: +91 80128 04316\n🌍 Website: www.novelexporters.com\n\n🕐 Business Hours: Monday–Saturday, 9 AM–6 PM IST\n💬 Live chat available on our website\n\nWe're here to help with all your spice export needs!";
+  }
+  
+  // Default response
+  return "👋 Hello! I'm the Novel Exporters AI Assistant. I can help you with:\n\n🌶️ **Product Info:** curry leaves, black pepper, cardamom, cloves, cinnamon, nutmeg, bay leaves, star anise\n🚢 **Shipping & Logistics:** air/sea exports, tracking, delivery times\n🏆 **Quality & Certifications:** FSSAI, ISO 22000, traceability\n💰 **Pricing & Orders:** bulk quotes, seasonal rates\n📞 **Support:** direct contact, business hours\n\nWhat would you like to know?";
 }
+
 
 app.post("/api/chat", async (req, res) => {
   const { message, history } = req.body;
@@ -150,7 +211,10 @@ app.post("/api/chat", async (req, res) => {
 
   // Attempt Google Generative AI (Gemma 3 4B)
   try {
-    if (!genAI) throw new Error("Google Generative AI Client not initialized (check GOOGLE_API_KEY)");
+    if (!genAI) {
+      console.warn("⚠️ Google Generative AI not initialized. Check GOOGLE_API_KEY in .env");
+      throw new Error("GOOGLE_API_KEY not configured");
+    }
 
     const model = genAI.getGenerativeModel({
       model: GEMINI_MODEL_NAME,
@@ -158,8 +222,6 @@ app.post("/api/chat", async (req, res) => {
     });
 
     // Format history for Google SDK
-    // Google expects { role: 'user' | 'model', parts: [{ text: string }] }
-    // IMPORTANT: History must start with 'user' role.
     let chatHistory = [];
     if (history && history.length > 0) {
       chatHistory = history.map(msg => ({
@@ -188,19 +250,12 @@ app.post("/api/chat", async (req, res) => {
     return res.json({ text });
 
   } catch (err) {
-    console.error("❌ Google AI Error Details:", err);
-    console.warn("⚠️ Google AI primary failed:", err.message);
-
-    try {
-      const ollamaText = await callOllama(message, history);
-      return res.json({ text: ollamaText });
-    } catch (ollamaErr) {
-      console.error("🔥 Both Hugging Face and Ollama Failed:", ollamaErr.message);
-      res.status(500).json({
-        message: "AI services currently unavailable. Please try again later or contact support.",
-        details: ollamaErr.message
-      });
-    }
+    console.error("❌ Gemini API Error:", err.message);
+    console.warn("⚠️ Using built-in catalog response as fallback...");
+    
+    // Built-in fallback: Use product knowledge base
+    const responseText = buildInChatResponse(message);
+    return res.json({ text: responseText });
   }
 });
 

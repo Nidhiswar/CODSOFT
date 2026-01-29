@@ -7,10 +7,11 @@ const OrderSchema = new mongoose.Schema({
             id: String,
             name: String,
             quantity: Number,
+            unit: { type: String, enum: ["kg", "g"], default: "kg" },
             price_info: String, // Since we don't have fixed prices, this could be "Quotation Requested"
         }
     ],
-    status: { type: String, enum: ["pending", "quoted", "confirmed", "shipped"], default: "pending" },
+    status: { type: String, enum: ["pending", "quoted", "confirmed", "shipped", "approved", "rejected"], default: "pending" },
     delivery_request: String,
     requested_delivery_date: Date,
     admin_notes: String,

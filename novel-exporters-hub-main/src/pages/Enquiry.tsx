@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 import { Send, CheckCircle } from "lucide-react";
 
 const Enquiry = () => {
@@ -41,9 +42,9 @@ const Enquiry = () => {
       setIsSubmitted(true);
 
       toast({
-        title: "Enquiry Sent!",
+        title: "✅ Enquiry Sent Successfully!",
         description:
-          "Your enquiry has been sent successfully. Please check your email.",
+          "Thank you! We've received your enquiry. Our team will respond within 24-48 hours. Check your email for confirmation.",
       });
 
       setTimeout(() => {
@@ -54,12 +55,12 @@ const Enquiry = () => {
           email: "",
           message: "",
         });
-      }, 3000);
+      }, 4000);
 
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Something went wrong",
+        title: "⚠️ Submission Failed",
+        description: error.message || "Unable to send enquiry. Please try again or contact: novelexporters@gmail.com",
         variant: "destructive",
       });
     } finally {
@@ -194,10 +195,10 @@ const Enquiry = () => {
             </p>
             <div className="flex justify-center gap-6 flex-wrap">
               <a
-                href="mailto:internationalsupport@novelexporters.com"
+                href="mailto:novelexporters@gmail.com"
                 className="text-primary hover:underline"
               >
-                internationalsupport@novelexporters.com
+                novelexporters@gmail.com
               </a>
               <a
                 href="tel:+918012804316"

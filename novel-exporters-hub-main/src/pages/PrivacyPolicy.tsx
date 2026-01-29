@@ -154,7 +154,7 @@ const PrivacyPolicy = () => {
                             For any privacy-related questions or to exercise your rights, please contact us at:
                         </p>
                         <p className="font-semibold mt-2">
-                            Email: internationalsupport@novelexporters.com<br />
+                            Email: novelexporters@gmail.com<br />
                             Phone: +91 80128 04316<br />
                             Address: Coimbatore, Tamil Nadu, India
                         </p>

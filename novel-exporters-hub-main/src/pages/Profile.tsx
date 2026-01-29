@@ -1,4 +1,4 @@
-import { User, Mail, Shield, Package, Clock, LogOut, ShoppingBag, Trash2, Plus, Minus, Send, Info, ExternalLink, ChevronRight, AlertCircle } from "lucide-react";
+import { User, Mail, Shield, Package, Clock, LogOut, ShoppingBag, Trash2, Send, Info, ExternalLink, ChevronRight, AlertCircle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
@@ -14,7 +14,7 @@ interface ProfileProps {
 
 const Profile = ({ user, onLogout }: ProfileProps) => {
   const navigate = useNavigate();
-  const { cart, removeFromCart, updateQuantity, requestQuote, totalItems } = useCart();
+  const { cart, removeFromCart, updateQuantity, updateUnit, requestQuote, totalItems } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryNote, setDeliveryNote] = useState("");
   const [requestedDeliveryDate, setRequestedDeliveryDate] = useState("");
@@ -46,22 +46,66 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
     navigate("/");
   };
 
+  const downloadOrderHistory = async () => {
+    if (orders.length === 0) {
+      toast.error("No orders to download");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please login to download order history");
+        return;
+      }
+
+      const response = await fetch(`http://127.0.0.1:5009/api/orders/my-orders/pdf`, {
+        method: "GET",
+        headers: {
+          "x-auth-token": token,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("PDF Error Response:", errorText);
+        throw new Error("Failed to generate PDF");
+      }
+      
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `novel-exporters-order-history-${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Order history downloaded as PDF!");
+    } catch (err) {
+      console.error("PDF Download Error:", err);
+      toast.error("Failed to download order history");
+    }
+  };
+
   const handleRequestQuote = async () => {
     if (cart.length === 0) {
-      toast.error("Your cart is empty");
+      toast.error("❌ Your cart is empty. Add products before submitting a request.");
       return;
     }
 
     try {
       setIsSubmitting(true);
       await requestQuote(deliveryNote, requestedDeliveryDate);
-      toast.success("Quote request sent successfully!");
+      toast.success("✅ Quotation request sent! Our team will respond within 24-48 hours.");
       setDeliveryNote("");
       setRequestedDeliveryDate("");
       fetchOrders();
       setView("history");
     } catch (err: any) {
-      toast.error(err.message || "Failed to send request");
+      toast.error(err.message || "⚠️ Failed to send request. Please try again later.");
     } finally {
       setIsSubmitting(false);
     }
@@ -108,52 +152,72 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
         </motion.div>
 
         <div className="grid lg:grid-cols-4 gap-8">
-          {/* Sidebar Navigation */}
-          <div className="lg:col-span-1 space-y-3">
-            <button
-              onClick={() => setView("cart")}
-              className={`w-full flex items-center justify-between p-5 rounded-3xl transition-all ${view === 'cart' ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' : 'bg-card text-muted-foreground hover:bg-muted/50'}`}
-            >
-              <div className="flex items-center gap-3 font-bold">
-                <ShoppingBag className="w-5 h-5" />
-                Active Selection
+          {/* Sidebar Navigation - Hide for Admin */}
+          {!user.isAdmin && (
+            <div className="lg:col-span-1 space-y-3">
+              <button
+                onClick={() => setView("cart")}
+                className={`w-full flex items-center justify-between p-5 rounded-3xl transition-all ${view === 'cart' ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' : 'bg-card text-muted-foreground hover:bg-muted/50'}`}
+              >
+                <div className="flex items-center gap-3 font-bold">
+                  <ShoppingBag className="w-5 h-5" />
+                  Active Selection
+                </div>
+                {totalItems > 0 && (
+                  <span className={`w-6 h-6 rounded-full text-[10px] flex items-center justify-center ${view === 'cart' ? 'bg-white text-primary' : 'bg-primary text-white'}`}>
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setView("history")}
+                className={`w-full flex items-center justify-between p-5 rounded-3xl transition-all ${view === 'history' ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' : 'bg-card text-muted-foreground hover:bg-muted/50'}`}
+              >
+                <div className="flex items-center gap-3 font-bold">
+                  <Clock className="w-5 h-5" />
+                  Request History
+                </div>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <div className="p-6 rounded-3xl bg-spice-gold/5 border border-spice-gold/20 mt-8">
+                <Info className="w-6 h-6 text-spice-gold mb-3" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Need help with your request? Our export team is available 24/7 for shipping consultation.
+                </p>
               </div>
-              {totalItems > 0 && (
-                <span className={`w-6 h-6 rounded-full text-[10px] flex items-center justify-center ${view === 'cart' ? 'bg-white text-primary' : 'bg-primary text-white'}`}>
-                  {totalItems}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setView("history")}
-              className={`w-full flex items-center justify-between p-5 rounded-3xl transition-all ${view === 'history' ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' : 'bg-card text-muted-foreground hover:bg-muted/50'}`}
-            >
-              <div className="flex items-center gap-3 font-bold">
-                <Clock className="w-5 h-5" />
-                Request History
-              </div>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-            <div className="p-6 rounded-3xl bg-spice-gold/5 border border-spice-gold/20 mt-8">
-              <Info className="w-6 h-6 text-spice-gold mb-3" />
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Need help with your request? Our export team is available 24/7 for shipping consultation.
-              </p>
             </div>
-          </div>
+          )}
 
-          {/* Main Content Area */}
-          <div className="lg:col-span-3">
-            <AnimatePresence mode="wait">
-              {view === 'cart' ? (
-                <motion.div
-                  key="cart"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="space-y-6"
-                >
-                  <div className="p-8 bg-card border border-border rounded-[2.5rem] shadow-sm">
+          {/* Admin Profile Content */}
+          {user.isAdmin && (
+            <div className="lg:col-span-4">
+              <div className="p-8 bg-card border border-border rounded-[2.5rem] shadow-sm text-center">
+                <Shield className="w-16 h-16 text-primary mx-auto mb-4" />
+                <h2 className="text-2xl font-bold font-serif mb-2">Administrator Account</h2>
+                <p className="text-muted-foreground mb-6">
+                  As an admin, you manage orders and users from the Admin Dashboard.
+                </p>
+                <Button variant="warm" onClick={() => navigate("/admin")} className="rounded-2xl">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Go to Admin Dashboard
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Main Content Area - Only for non-admin users */}
+          {!user.isAdmin && (
+            <div className="lg:col-span-3">
+              <AnimatePresence mode="wait">
+                {view === 'cart' ? (
+                  <motion.div
+                    key="cart"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-6"
+                  >
+                    <div className="p-8 bg-card border border-border rounded-[2.5rem] shadow-sm">
                     <h2 className="text-2xl font-bold font-serif mb-8 flex items-center gap-3">
                       <ShoppingBag className="w-6 h-6 text-spice-gold" />
                       Manage Your Selection
@@ -177,10 +241,23 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
                               <p className="text-xs text-primary font-medium italic">{item.tamilName}</p>
                             </div>
                             <div className="flex flex-col items-end gap-3">
-                              <div className="flex items-center gap-1 bg-white dark:bg-zinc-800 p-1 rounded-xl border border-border">
-                                <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1.5 hover:bg-muted rounded-lg"><Minus className="w-4 h-4" /></button>
-                                <span className="w-8 text-center font-bold">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-1.5 hover:bg-muted rounded-lg"><Plus className="w-4 h-4" /></button>
+                              <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 p-2 rounded-xl border border-border">
+                                <input
+                                  type="number"
+                                  min="0.1"
+                                  step="0.1"
+                                  value={item.quantity}
+                                  onChange={(e) => updateQuantity(item.id, parseFloat(e.target.value) || 0.1)}
+                                  className="w-20 h-9 text-center font-bold bg-muted/30 border border-border rounded-lg focus:ring-2 ring-primary/20 outline-none text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <select
+                                  value={item.unit || 'kg'}
+                                  onChange={(e) => updateUnit(item.id, e.target.value as 'kg' | 'g')}
+                                  className="h-9 px-3 font-bold bg-muted/30 border border-border rounded-lg focus:ring-2 ring-primary/20 outline-none text-sm cursor-pointer"
+                                >
+                                  <option value="kg">kg</option>
+                                  <option value="g">g</option>
+                                </select>
                               </div>
                               <button onClick={() => removeFromCart(item.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 className="w-5 h-5" /></button>
                             </div>
@@ -234,8 +311,22 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-6"
                 >
-                  <h2 className="text-2xl font-bold font-serif mb-2">Request History</h2>
-                  <p className="text-muted-foreground mb-8 text-sm">Track your past enquiries and official quotations.</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold font-serif mb-2">Request History</h2>
+                      <p className="text-muted-foreground text-sm">Track your past enquiries and official quotations.</p>
+                    </div>
+                    {orders.length > 0 && (
+                      <Button
+                        variant="outline"
+                        onClick={downloadOrderHistory}
+                        className="rounded-2xl flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download CSV
+                      </Button>
+                    )}
+                  </div>
 
                   {orders.length === 0 ? (
                     <div className="p-20 text-center bg-card rounded-[2.5rem] border border-dashed border-border">
@@ -252,10 +343,14 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
                               <h3 className="text-lg font-bold font-mono">#{order._id.slice(-8).toUpperCase()}</h3>
                             </div>
                             <div className="flex flex-col items-end">
-                              <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                              <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                order.status === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                order.status === 'approved' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                order.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                order.status === 'confirmed' ? 'bg-green-600 text-white' :
                                 order.status === 'quoted' ? 'bg-blue-600 text-white' :
-                                  'bg-green-600 text-white'
-                                }`}>
+                                'bg-green-600 text-white'
+                              }`}>
                                 {order.status}
                               </span>
                               <span className="text-[10px] text-muted-foreground mt-2">{new Date(order.createdAt).toLocaleDateString()}</span>
@@ -287,6 +382,7 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
               )}
             </AnimatePresence>
           </div>
+          )}
         </div>
       </div>
     </div>

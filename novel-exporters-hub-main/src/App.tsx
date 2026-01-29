@@ -34,12 +34,14 @@ interface User {
   isAdmin: boolean;
   role?: string;
   hasConsented?: boolean;
+  isFirstLogin?: boolean;
+  showConsentOverlay?: boolean; // Only true on first login
 }
 
 const AppContent = ({ user, setUser, handleLogout, handleLogin, handleConsentAccept }: any) => {
   return (
     <BrowserRouter>
-      {user && !user.hasConsented && !user.isAdmin && (
+      {user && user.showConsentOverlay && (
         <ConsentOverlay
           onAccept={handleConsentAccept}
           onDecline={() => {
@@ -160,7 +162,7 @@ const App = () => {
           if (userData && !userData.message) {
             setUser({
               ...userData,
-              isAdmin: userData.role === 'admin' && userData.email.endsWith('@novelexporters.com')
+              isAdmin: userData.role === 'admin' && userData.email === 'novelexporters@gmail.com'
             });
           } else {
             localStorage.removeItem("token");
@@ -177,7 +179,7 @@ const App = () => {
   const handleLogin = (userData: any) => {
     setUser({
       ...userData,
-      isAdmin: userData.role === 'admin' && userData.email.endsWith('@novelexporters.com')
+      isAdmin: userData.role === 'admin' && userData.email === 'novelexporters@gmail.com'
     });
   };
 
@@ -194,7 +196,8 @@ const App = () => {
         setUser({
           ...updatedUser,
           id: updatedUser._id,
-          isAdmin: updatedUser.role === 'admin' && updatedUser.email.endsWith('@novelexporters.com')
+          isAdmin: updatedUser.role === 'admin' && updatedUser.email === 'novelexporters@gmail.com',
+          showConsentOverlay: false // Hide overlay after consent
         });
         // Redirect to products page after successful consent
         window.location.href = "/products";

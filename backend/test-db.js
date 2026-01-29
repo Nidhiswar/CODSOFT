@@ -22,7 +22,7 @@ if (!uri) {
 }
 
 mongoose
-    .connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+    .connect(uri)
     .then(() => {
         console.log(`✅ MongoDB Connection Success (${foundKey})`);
         process.exit(0);

@@ -158,5 +158,19 @@ export const api = {
     getTotalProductsCount: async () => {
         const res = await fetch(`${API_BASE_URL}/orders/total-products-count`);
         return res.json();
-    }
+    },
+
+    downloadOrderHistoryPDF: async () => {
+        const res = await fetch(`${API_BASE_URL}/orders/my-orders/pdf`, {
+            headers: getHeaders(),
+        });
+        return res.blob();
+    },
+
+    downloadEnquiryHistoryPDF: async () => {
+        const res = await fetch(`${API_BASE_URL}/enquiry/enquiry-history/pdf`, {
+            headers: getHeaders(),
+        });
+        return res.blob();
+    },
 };

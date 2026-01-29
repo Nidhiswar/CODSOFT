@@ -3,12 +3,17 @@ import {
     Users, Package, TrendingUp, Mail,
     BarChart3, Calendar, Search,
     Filter, MoreHorizontal, CheckCircle2,
-    Clock, AlertCircle, ShoppingCart
+    Clock, AlertCircle, ShoppingCart, Download,
+    DollarSign, FileText, X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import novelLogo from "@/assets/novel-logo-dynamic.png";
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState("overview");
@@ -17,10 +22,26 @@ const AdminDashboard = () => {
     const [users, setUsers] = useState<any[]>([]);
     const [analytics, setAnalytics] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [editingOrder, setEditingOrder] = useState<string | null>(null);
+    const [pricingData, setPricingData] = useState<{[key: string]: { pricing: string; timeline: string; notes: string }}>({});
+    const navigate = useNavigate();
+    const { user, loading: authLoading } = useAuth();
+    const adminEmail = "novelexporters@gmail.com";
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        // Wait for auth to complete before checking role
+        if (!authLoading) {
+            if (!user || user.role !== "admin") {
+                navigate("/login");
+            }
+        }
+    }, [user, authLoading, navigate]);
+
+    useEffect(() => {
+        if (user?.role === "admin") {
+            fetchData();
+        }
+    }, [user]);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -42,13 +63,174 @@ const AdminDashboard = () => {
         }
     };
 
-    const updateStatus = async (orderId: string, status: string) => {
+    const updateStatus = async (orderId: string, status: string, customNotes?: string) => {
         try {
-            await api.updateOrderStatus(orderId, status, `Manual update by admin on ${new Date().toLocaleDateString()}`);
+            const notes = customNotes || `Status updated to ${status} by admin on ${new Date().toLocaleDateString()}`;
+            await api.updateOrderStatus(orderId, status, notes);
             toast.success(`Order set to ${status}`);
+            setEditingOrder(null);
             fetchData();
         } catch (err) {
             toast.error("Update failed");
+        }
+    };
+
+    const updateOrderWithPricingTimeline = async (orderId: string, status: string) => {
+        const data = pricingData[orderId];
+        if (!data) {
+            toast.error("Please fill in pricing and timeline details");
+            return;
+        }
+        const notes = `Pricing: ${data.pricing || 'TBD'} | Timeline: ${data.timeline || 'TBD'} | Notes: ${data.notes || 'None'}`;
+        await updateStatus(orderId, status, notes);
+        setPricingData(prev => {
+            const updated = { ...prev };
+            delete updated[orderId];
+            return updated;
+        });
+    };
+
+    // Download Order Data as PDF with Company Logo
+    const downloadOrdersPDF = async () => {
+        try {
+            // Convert logo to base64 for embedding in PDF
+            const getLogoBase64 = (): Promise<string> => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx?.drawImage(img, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = () => resolve('');
+                    img.src = novelLogo;
+                });
+            };
+
+            const logoBase64 = await getLogoBase64();
+
+            const reportContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Novel Exporters - Orders Report</title>
+                    <style>
+                        @page { size: A4 landscape; margin: 12mm; }
+                        * { box-sizing: border-box; }
+                        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 15px; color: #1e293b; font-size: 10px; background: #fff; }
+                        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 3px solid #0c4a6e; padding-bottom: 15px; }
+                        .logo-section { display: flex; align-items: center; gap: 15px; }
+                        .logo { width: 70px; height: 70px; object-fit: contain; }
+                        .company-info h1 { color: #0c4a6e; margin: 0; font-size: 22px; font-weight: 700; }
+                        .company-info p { color: #64748b; margin: 3px 0 0; font-size: 11px; }
+                        .report-info { text-align: right; }
+                        .report-info h2 { color: #0c4a6e; margin: 0; font-size: 14px; font-weight: 600; }
+                        .report-info p { color: #64748b; margin: 2px 0; font-size: 9px; }
+                        .meta { display: flex; justify-content: space-between; margin-bottom: 15px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); padding: 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
+                        .meta span { color: #475569; font-size: 10px; }
+                        .meta strong { color: #0c4a6e; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid #e2e8f0; }
+                        th { background: linear-gradient(135deg, #0c4a6e, #0f766e); color: white; padding: 10px 6px; text-align: left; font-weight: 600; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; }
+                        td { padding: 8px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: top; font-size: 9px; }
+                        tr:nth-child(even) { background: #f8fafc; }
+                        .status { display: inline-block; padding: 3px 8px; border-radius: 10px; font-weight: 600; font-size: 8px; text-transform: uppercase; }
+                        .status-pending { background: #fef3c7; color: #92400e; }
+                        .status-confirmed { background: #d1fae5; color: #065f46; }
+                        .status-rejected { background: #fee2e2; color: #991b1b; }
+                        .status-approved { background: #dbeafe; color: #1e40af; }
+                        .order-id { font-family: 'Courier New', monospace; font-weight: bold; color: #0c4a6e; font-size: 10px; }
+                        .user-name { font-weight: 600; color: #1e293b; }
+                        .user-email { color: #64748b; font-size: 8px; }
+                        .phone { color: #0c4a6e; font-weight: 500; }
+                        .instructions { max-width: 180px; font-style: italic; color: #64748b; font-size: 9px; line-height: 1.3; }
+                        .products { font-size: 9px; line-height: 1.4; }
+                        .footer { margin-top: 25px; text-align: center; color: #94a3b8; font-size: 9px; border-top: 2px solid #0c4a6e; padding-top: 12px; }
+                        .footer p { margin: 3px 0; }
+                        .watermark { position: fixed; bottom: 10px; right: 15px; font-size: 8px; color: #cbd5e1; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="logo-section">
+                            ${logoBase64 ? `<img src="${logoBase64}" alt="Novel Exporters" class="logo" />` : ''}
+                            <div class="company-info">
+                                <h1>NOVEL EXPORTERS</h1>
+                                <p>Premium Indian Spices | Global Export Excellence</p>
+                            </div>
+                        </div>
+                        <div class="report-info">
+                            <h2>📦 USER ORDER DATA REPORT</h2>
+                            <p>Generated: ${new Date().toLocaleString()}</p>
+                            <p>Admin: novelexporters@gmail.com</p>
+                        </div>
+                    </div>
+                    
+                    <div class="meta">
+                        <span><strong>Total Orders:</strong> ${orders.length}</span>
+                        <span><strong>Pending:</strong> ${orders.filter(o => o.status === 'pending').length}</span>
+                        <span><strong>Confirmed:</strong> ${orders.filter(o => o.status === 'confirmed').length}</span>
+                        <span><strong>Rejected:</strong> ${orders.filter(o => o.status === 'rejected').length}</span>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 12%">Order ID</th>
+                                <th style="width: 18%">User Name</th>
+                                <th style="width: 12%">Phone No</th>
+                                <th style="width: 20%">Products</th>
+                                <th style="width: 20%">Special Instructions</th>
+                                <th style="width: 10%">Status</th>
+                                <th style="width: 8%">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${orders.map(order => `
+                                <tr>
+                                    <td class="order-id">#${order._id.slice(-8).toUpperCase()}</td>
+                                    <td>
+                                        <div class="user-name">${order.user?.username || 'N/A'}</div>
+                                        <div class="user-email">${order.user?.email || ''}</div>
+                                    </td>
+                                    <td class="phone">${order.user?.phone || 'Not provided'}</td>
+                                    <td class="products">${order.products.map((p: any) => `${p.name} (${p.quantity} ${p.unit || 'kg'})`).join(', ')}</td>
+                                    <td class="instructions">${order.delivery_request || 'No special instructions'}</td>
+                                    <td><span class="status status-${order.status}">${order.status}</span></td>
+                                    <td>${new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <div class="footer">
+                        <p><strong>© 2026 Novel Exporters</strong> | International Trading Excellence</p>
+                        <p>📧 novelexporters@gmail.com | 📞 +91 80128 04316</p>
+                        <p>This document is confidential and intended for internal use only.</p>
+                    </div>
+                    <div class="watermark">Novel Exporters - Confidential</div>
+                </body>
+                </html>
+            `;
+
+            // Create a new window and print to PDF
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.write(reportContent);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 300);
+            }
+
+            toast.success("📄 Order data PDF generated! Use Print dialog to save as PDF.");
+        } catch (err) {
+            toast.error("Failed to generate PDF report");
         }
     };
 
@@ -108,7 +290,10 @@ const AdminDashboard = () => {
                                 <th>Order ID</th>
                                 <th>User</th>
                                 <th>Email</th>
+                                <th>Phone</th>
                                 <th>Products</th>
+                                <th>Delivery Date</th>
+                                <th>Instructions</th>
                                 <th>Status</th>
                                 <th>Date</th>
                             </tr>
@@ -119,7 +304,10 @@ const AdminDashboard = () => {
                                     <td>#${order._id.slice(-6).toUpperCase()}</td>
                                     <td>${order.user?.username || 'N/A'}</td>
                                     <td>${order.user?.email || 'N/A'}</td>
-                                    <td>${order.products.map((p: any) => `${p.name} (${p.quantity})`).join(', ')}</td>
+                                    <td>${order.user?.phone || 'N/A'}</td>
+                                    <td>${order.products.map((p: any) => `${p.name} (${p.quantity} ${p.unit || 'kg'})`).join(', ')}</td>
+                                    <td>${order.requested_delivery_date ? new Date(order.requested_delivery_date).toLocaleDateString() : 'Flexible'}</td>
+                                    <td>${order.delivery_request || 'None'}</td>
                                     <td><strong>${order.status.toUpperCase()}</strong></td>
                                     <td>${new Date(order.createdAt).toLocaleDateString()}</td>
                                 </tr>
@@ -201,28 +389,35 @@ const AdminDashboard = () => {
                 </html>
             `;
 
-            // Create a blob and download
-            const blob = new Blob([reportContent], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Novel_Exporters_Report_${new Date().toISOString().split('T')[0]}.html`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            // Create a new window and print to PDF
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.write(reportContent);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            }
 
-            toast.success("Export report generated successfully! Open the HTML file and use your browser's Print to PDF feature.");
+            toast.success("PDF report generated successfully");
         } catch (err) {
-            toast.error("Failed to generate report");
+            toast.error("Failed to generate PDF report");
         }
     };
 
-    if (isLoading) return (
+    // Show loading while authenticating or fetching data
+    if (authLoading || isLoading) return (
         <div className="min-h-screen flex items-center justify-center bg-background">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
     );
+
+    // Don't render if not admin
+    if (!user || user.role !== "admin") {
+        return null;
+    }
 
     return (
         <div className="min-h-screen bg-[#FDFCFB] dark:bg-zinc-950 pt-24 pb-20">
@@ -236,8 +431,12 @@ const AdminDashboard = () => {
                             Live Export Operations Dashboard
                         </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                         <Button variant="outline" onClick={fetchData} className="rounded-xl">Refresh Data</Button>
+                        <Button variant="outline" onClick={downloadOrdersPDF} className="rounded-xl border-green-500/30 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/20">
+                            <Download className="w-4 h-4 mr-2" />
+                            Download Orders PDF
+                        </Button>
                         <Button variant="warm" onClick={generatePDFReport} className="rounded-xl shadow-lg shadow-primary/20">Generate Export Report</Button>
                     </div>
                 </div>
@@ -352,63 +551,174 @@ const AdminDashboard = () => {
                             <motion.div key="ord" className="p-8 h-full">
                                 <div className="flex items-center justify-between mb-8">
                                     <h3 className="text-2xl font-bold font-serif">Manage Orders</h3>
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                        <input className="pl-10 pr-4 py-2 rounded-xl bg-muted/50 border-none text-sm w-64" placeholder="Search orders..." />
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                            <input className="pl-10 pr-4 py-2 rounded-xl bg-muted/50 border-none text-sm w-64" placeholder="Search orders..." />
+                                        </div>
+                                        <Button variant="outline" onClick={downloadOrdersPDF} className="rounded-xl text-xs">
+                                            <Download className="w-4 h-4 mr-1" /> Export PDF
+                                        </Button>
                                     </div>
                                 </div>
 
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="text-[10px] font-black uppercase text-muted-foreground tracking-widest border-b border-border">
-                                                <th className="pb-4 pl-4">Order ID / User</th>
-                                                <th className="pb-4">Product Breakdown</th>
-                                                <th className="pb-4">Status</th>
-                                                <th className="pb-4 pr-4 text-right">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border">
-                                            {orders.map((order) => (
-                                                <tr key={order._id} className="group hover:bg-muted/10 transition-colors">
-                                                    <td className="py-6 pl-4">
-                                                        <p className="text-sm font-bold text-foreground">#{order._id.slice(-6).toUpperCase()}</p>
-                                                        <p className="text-xs text-muted-foreground">{order.user?.email}</p>
-                                                    </td>
-                                                    <td className="py-6">
-                                                        <div className="flex gap-1 flex-wrap">
-                                                            {order.products.map((p: any, i: number) => (
-                                                                <span key={i} className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[10px] font-medium border border-border whitespace-nowrap">
-                                                                    {p.name} ({p.quantity})
-                                                                </span>
-                                                            ))}
+                                <div className="space-y-4">
+                                    {orders.map((order) => (
+                                        <div key={order._id} className="p-6 rounded-2xl bg-muted/20 border border-border hover:border-primary/20 transition-all">
+                                            {/* Order Header */}
+                                            <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                                                        <Package className="w-6 h-6 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-lg font-bold text-foreground">Order #{order._id.slice(-8).toUpperCase()}</p>
+                                                        <p className="text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleString()}</p>
+                                                    </div>
+                                                </div>
+                                                <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase ${
+                                                    order.status === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                    order.status === 'approved' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                    order.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                    order.status === 'confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                    'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                                }`}>
+                                                    {order.status}
+                                                </span>
+                                            </div>
+
+                                            {/* Customer & Order Info */}
+                                            <div className="grid md:grid-cols-3 gap-6 mb-6">
+                                                <div className="space-y-2">
+                                                    <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Customer</h4>
+                                                    <p className="font-semibold text-foreground">{order.user?.username || 'N/A'}</p>
+                                                    <p className="text-sm text-muted-foreground">{order.user?.email}</p>
+                                                    <p className="text-sm text-primary font-medium">{order.user?.phone || 'No phone'}</p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Products</h4>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {order.products.map((p: any, i: number) => (
+                                                            <span key={i} className="px-2 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-xs font-medium">
+                                                                {p.name} ({p.quantity} {p.unit || 'kg'})
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Special Instructions</h4>
+                                                    <p className="text-sm text-foreground/80 italic">
+                                                        {order.delivery_request || 'No special instructions'}
+                                                    </p>
+                                                    {order.requested_delivery_date && (
+                                                        <p className="text-xs text-spice-gold font-bold">📅 Requested: {new Date(order.requested_delivery_date).toLocaleDateString()}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Admin Notes Display */}
+                                            {order.admin_notes && (
+                                                <div className="mb-4 p-3 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+                                                    <p className="text-xs font-bold text-green-700 dark:text-green-400 mb-1">Previous Admin Notes:</p>
+                                                    <p className="text-sm text-green-600 dark:text-green-300">{order.admin_notes}</p>
+                                                </div>
+                                            )}
+
+                                            {/* Pricing & Timeline Section */}
+                                            {editingOrder === order._id ? (
+                                                <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 mb-4">
+                                                    <div className="flex items-center gap-2 mb-4">
+                                                        <DollarSign className="w-5 h-5 text-blue-600" />
+                                                        <h4 className="font-bold text-blue-700 dark:text-blue-400">Provide Pricing & Timeline</h4>
+                                                    </div>
+                                                    <div className="grid md:grid-cols-3 gap-4 mb-4">
+                                                        <div>
+                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Pricing (₹/USD)</label>
+                                                            <Input
+                                                                placeholder="e.g., ₹50,000 or $600"
+                                                                value={pricingData[order._id]?.pricing || ''}
+                                                                onChange={(e) => setPricingData(prev => ({
+                                                                    ...prev,
+                                                                    [order._id]: { ...prev[order._id], pricing: e.target.value }
+                                                                }))}
+                                                                className="rounded-lg"
+                                                            />
                                                         </div>
-                                                    </td>
-                                                    <td className="py-6">
-                                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-colors ${order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                                                            order.status === 'quoted' ? 'bg-blue-100 text-blue-700' :
-                                                                'bg-green-100 text-green-700'
-                                                            }`}>
-                                                            {order.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-6 pr-4 text-right">
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            {order.status === 'pending' && (
-                                                                <Button size="sm" variant="outline" className="h-8 text-[10px] font-bold uppercase" onClick={() => updateStatus(order._id, 'quoted')}>Mark Quoted</Button>
-                                                            )}
-                                                            {order.status === 'quoted' && (
-                                                                <Button size="sm" variant="default" className="h-8 text-[10px] font-bold uppercase" onClick={() => updateStatus(order._id, 'confirmed')}>Confirm Order</Button>
-                                                            )}
-                                                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg">
-                                                                <MoreHorizontal className="w-4 h-4" />
-                                                            </Button>
+                                                        <div>
+                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Delivery Timeline</label>
+                                                            <Input
+                                                                placeholder="e.g., 15-20 days"
+                                                                value={pricingData[order._id]?.timeline || ''}
+                                                                onChange={(e) => setPricingData(prev => ({
+                                                                    ...prev,
+                                                                    [order._id]: { ...prev[order._id], timeline: e.target.value }
+                                                                }))}
+                                                                className="rounded-lg"
+                                                            />
                                                         </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                                        <div>
+                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Additional Notes</label>
+                                                            <Input
+                                                                placeholder="Any additional info..."
+                                                                value={pricingData[order._id]?.notes || ''}
+                                                                onChange={(e) => setPricingData(prev => ({
+                                                                    ...prev,
+                                                                    [order._id]: { ...prev[order._id], notes: e.target.value }
+                                                                }))}
+                                                                className="rounded-lg"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Button 
+                                                            size="sm" 
+                                                            onClick={() => updateOrderWithPricingTimeline(order._id, 'confirmed')}
+                                                            className="bg-green-600 hover:bg-green-700 text-white rounded-lg"
+                                                        >
+                                                            <CheckCircle2 className="w-4 h-4 mr-1" /> Confirm with Quote
+                                                        </Button>
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="outline"
+                                                            onClick={() => setEditingOrder(null)}
+                                                            className="rounded-lg"
+                                                        >
+                                                            <X className="w-4 h-4 mr-1" /> Cancel
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ) : null}
+
+                                            {/* Action Buttons */}
+                                            <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-border">
+                                                <span className="text-xs font-bold text-muted-foreground mr-2">Update Status:</span>
+                                                <Button
+                                                    size="sm"
+                                                    variant={order.status === 'pending' ? 'default' : 'outline'}
+                                                    onClick={() => updateStatus(order._id, 'pending')}
+                                                    className="rounded-lg text-xs h-8"
+                                                >
+                                                    <Clock className="w-3 h-3 mr-1" /> Pending
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant={order.status === 'confirmed' ? 'default' : 'outline'}
+                                                    onClick={() => setEditingOrder(order._id)}
+                                                    className="rounded-lg text-xs h-8 bg-green-600 hover:bg-green-700 text-white border-green-600"
+                                                >
+                                                    <CheckCircle2 className="w-3 h-3 mr-1" /> Confirm + Quote
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant={order.status === 'rejected' ? 'default' : 'outline'}
+                                                    onClick={() => updateStatus(order._id, 'rejected')}
+                                                    className="rounded-lg text-xs h-8 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
+                                                >
+                                                    <AlertCircle className="w-3 h-3 mr-1" /> Reject
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </motion.div>
                         )}

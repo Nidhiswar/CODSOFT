@@ -45,8 +45,8 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold font-serif text-foreground mb-1">Email</h3>
                     <p className="text-muted-foreground text-sm">International Support</p>
-                    <a href="mailto:internationalsupport@novelexporters.com" className="text-primary hover:underline">
-                      internationalsupport@novelexporters.com
+                    <a href="mailto:novelexporters@gmail.com" className="text-primary hover:underline">
+                      novelexporters@gmail.com
                     </a>
                   </div>
                 </div>
@@ -138,7 +138,7 @@ const Contact = () => {
                 Call Us Now
               </Button>
             </a>
-            <a href="mailto:internationalsupport@novelexporters.com">
+            <a href="mailto:novelexporters@gmail.com">
               <Button variant="outline" size="lg">
                 <Mail className="w-4 h-4 mr-2" />
                 Send Email

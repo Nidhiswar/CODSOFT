@@ -29,20 +29,24 @@ const ProductCard = ({ product, index = 0, onClick, className }: ProductCardProp
       layoutId={`card-container-${product.id}`}
       onClick={() => onClick && onClick(product)}
       className={`group relative overflow-hidden rounded-[2rem] bg-white/5 dark:bg-black/20 backdrop-blur-xl shadow-2xl border border-white/10 cursor-pointer h-full flex flex-col ${className}`}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, scale: 0.85, y: 30 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: 20 }}
       transition={{
         type: "spring",
-        stiffness: 100,
-        damping: 15,
-        delay: index * 0.05
+        stiffness: 500,
+        damping: 25,
+        mass: 0.5,
+        delay: index * 0.03
       }}
       whileHover={{
-        y: -12,
-        scale: 1.02,
-        boxShadow: "0 25px 50px -12px rgba(196, 160, 82, 0.25)",
-        transition: { type: "spring", stiffness: 400, damping: 10 }
+        y: -16,
+        scale: 1.03,
+        rotateX: 2,
+        boxShadow: "0 35px 60px -15px rgba(196, 160, 82, 0.35)",
+        transition: { type: "spring", stiffness: 500, damping: 15, mass: 0.5 }
       }}
+      whileTap={{ scale: 0.97 }}
     >
       {/* Image Container */}
       <div className="relative aspect-[4/5] overflow-hidden">
@@ -51,11 +55,11 @@ const ProductCard = ({ product, index = 0, onClick, className }: ProductCardProp
           src={product.image}
           alt={product.name}
           loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
         />
 
         {/* Radial Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-30 transition-opacity duration-200" />
 
         {/* Glass Tag */}
         <motion.div
@@ -68,26 +72,28 @@ const ProductCard = ({ product, index = 0, onClick, className }: ProductCardProp
         {/* Floating Add to Cart Button */}
         <button
           onClick={handleAddToCart}
-          className="absolute bottom-4 right-4 w-12 h-12 rounded-2xl bg-spice-gold text-black flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 group/cart"
+          className="absolute bottom-4 right-4 w-12 h-12 rounded-2xl bg-spice-gold text-black flex items-center justify-center shadow-2xl transition-all duration-150 hover:scale-110 hover:rotate-3 active:scale-90 group/cart overflow-hidden"
         >
           <AnimatePresence mode="wait">
             {isAdded ? (
               <motion.div
                 key="check"
-                initial={{ opacity: 0, scale: 0.5, rotate: -45 }}
+                initial={{ opacity: 0, scale: 0, rotate: -180 }}
                 animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                exit={{ opacity: 0, scale: 0.5 }}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 20 }}
               >
                 <Check className="w-5 h-5 stroke-[3]" />
               </motion.div>
             ) : (
               <motion.div
                 key="cart"
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.5 }}
+                initial={{ opacity: 0, scale: 0, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0, y: -10 }}
+                transition={{ type: "spring", stiffness: 500, damping: 20 }}
               >
-                <ShoppingCart className="w-5 h-5 transition-transform group-hover/cart:rotate-12" />
+                <ShoppingCart className="w-5 h-5 transition-transform duration-150 group-hover/cart:rotate-12" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -131,7 +137,7 @@ const ProductCard = ({ product, index = 0, onClick, className }: ProductCardProp
       </div>
 
       {/* Decorative inner glow */}
-      <div className="absolute inset-0 rounded-[2rem] pointer-events-none border border-transparent group-hover:border-white/20 transition-colors duration-500" />
+      <div className="absolute inset-0 rounded-[2rem] pointer-events-none border-2 border-transparent group-hover:border-spice-gold/30 transition-all duration-200 group-hover:shadow-[inset_0_0_30px_rgba(196,160,82,0.1)]" />
     </motion.div>
   );
 };

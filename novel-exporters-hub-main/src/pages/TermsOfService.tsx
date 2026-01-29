@@ -216,7 +216,7 @@ const TermsOfService = () => {
                             For questions regarding these Terms of Service, please contact:
                         </p>
                         <p className="font-semibold mt-2">
-                            Email: internationalsupport@novelexporters.com<br />
+                            Email: novelexporters@gmail.com<br />
                             Phone: +91 80128 04316<br />
                             Address: Coimbatore, Tamil Nadu, India
                         </p>

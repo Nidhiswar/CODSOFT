@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Novel Exporters Favicon - Clean, minimal design for all sizes -->
+  
+  <!-- White background with subtle rounded corners -->
+  <rect width="64" height="64" fill="#ffffff" rx="8"/>
+  
+  <!-- Main green circle -->
+  <circle cx="32" cy="32" r="28" fill="#228B22"/>
+  
+  <!-- Bold lowercase "n" - clear at small sizes -->
+  <path d="M18 50 L18 32 C18 24 24 20 32 20 C40 20 46 24 46 32 L46 50" 
+        fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Leaf accent on top of the 'n' arc -->
+  <path d="M32 8 Q38 14 32 20 Q26 14 32 8" fill="#90EE90"/>
+  <path d="M32 10 L32 18" stroke="#228B22" stroke-width="1" stroke-linecap="round"/>
+</svg>

@@ -55,17 +55,17 @@ const Footer = () => {
             <ul className="space-y-5">
               <li className="flex items-start gap-4 group">
                 <a
-                  href="mailto:internationalsupport@novelexporters.com"
+                  href="mailto:novelexporters@gmail.com"
                   className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 shadow-sm flex items-center justify-center shrink-0 group-hover:bg-spice-gold group-hover:text-black transition-all cursor-pointer"
                 >
                   <Mail className="w-5 h-5" />
                 </a>
                 <div className="space-y-1">
                   <a
-                    href="mailto:internationalsupport@novelexporters.com"
+                    href="mailto:novelexporters@gmail.com"
                     className="text-zinc-800 dark:text-zinc-300 text-sm font-semibold break-all hover:text-spice-gold transition-colors"
                   >
-                    internationalsupport@novelexporters.com
+                      novelexporters@gmail.com
                   </a>
                 </div>
               </li>

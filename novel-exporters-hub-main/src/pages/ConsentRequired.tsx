@@ -39,7 +39,7 @@ const ConsentRequired = () => {
                     <div className="pt-6 border-t border-zinc-100 dark:border-white/5">
                         <p className="text-xs text-muted-foreground mb-4 font-medium uppercase tracking-[0.2em]">Need Assistance?</p>
                         <a
-                            href="mailto:internationalsupport@novelexporters.com"
+                            href="mailto:novelexporters@gmail.com"
                             className="inline-flex items-center gap-2 text-primary hover:underline font-bold text-sm"
                         >
                             <Mail className="w-4 h-4" />

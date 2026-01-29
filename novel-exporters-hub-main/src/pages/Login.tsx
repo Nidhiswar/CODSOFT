@@ -35,7 +35,7 @@ const Login = ({ onLogin }: LoginProps) => {
     setIsLoading(true);
 
     if (!isLogin && formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error("❌ Passwords do not match. Please check and try again.");
       setIsLoading(false);
       return;
     }
@@ -55,13 +55,20 @@ const Login = ({ onLogin }: LoginProps) => {
 
       if (res.token) {
         onLogin(res.user);
-        toast.success(isLogin ? `Welcome back, ${res.user.username}!` : "Account created successfully!");
-        navigate("/");
+        // Check if admin email - redirect to admin dashboard
+        const isAdmin = res.user.role === 'admin' && res.user.email === 'novelexporters@gmail.com';
+        if (isAdmin) {
+          toast.success(`✅ Welcome Admin, ${res.user.username}!`);
+          navigate("/admin");
+        } else {
+          toast.success(isLogin ? `✅ Welcome back, ${res.user.username}!` : "✅ Account created successfully! Explore our products.");
+          navigate("/");
+        }
       } else {
-        toast.error(res.message || "Authentication failed");
+        toast.error(`⚠️ ${res.message || "Authentication failed. Please check your credentials."}`);
       }
-    } catch (err) {
-      toast.error("An error occurred during authentication");
+    } catch (err: any) {
+      toast.error("❌ Authentication error. Please try again or contact support.");
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +113,7 @@ const Login = ({ onLogin }: LoginProps) => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Company Representative</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">User Name</label>
                 <div className="relative group">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-primary transition-colors" />
                   <Input

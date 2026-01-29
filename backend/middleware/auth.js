@@ -22,8 +22,8 @@ const auth = async (req, res, next) => {
 const admin = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
-        if (!user || user.role !== "admin" || user.email !== "internationalsupport@novelexporters.com") {
-            return res.status(403).json({ message: "Access denied. Admin access restricted to internationalsupport@novelexporters.com only." });
+        if (!user || user.role !== "admin" || user.email !== "novelexporters@gmail.com") {
+            return res.status(403).json({ message: "Access denied. Admin access restricted to novelexporters@gmail.com only." });
         }
         next();
     } catch (err) {

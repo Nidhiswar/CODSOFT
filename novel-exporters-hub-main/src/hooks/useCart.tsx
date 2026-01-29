@@ -2,8 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product } from '@/data/products';
 import { api } from '@/lib/api';
 
+export type WeightUnit = 'kg' | 'g';
+
 interface CartItem extends Product {
     quantity: number;
+    unit: WeightUnit;
 }
 
 interface CartContextType {
@@ -12,6 +15,7 @@ interface CartContextType {
     removeFromCart: (productId: string) => void;
     clearCart: () => void;
     updateQuantity: (productId: string, quantity: number) => void;
+    updateUnit: (productId: string, unit: WeightUnit) => void;
     totalItems: number;
     requestQuote: (deliveryNote?: string, deliveryDate?: string) => Promise<void>;
 }
@@ -56,7 +60,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
                 );
             }
-            return [...prev, { ...product, quantity: 1 }];
+            return [...prev, { ...product, quantity: 1, unit: 'kg' as WeightUnit }];
         });
     };
 
@@ -66,7 +70,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const updateQuantity = (productId: string, quantity: number) => {
         setCart(prev => prev.map(item =>
-            item.id === productId ? { ...item, quantity: Math.max(1, quantity) } : item
+            item.id === productId ? { ...item, quantity: Math.max(0.1, quantity) } : item
+        ));
+    };
+
+    const updateUnit = (productId: string, unit: WeightUnit) => {
+        setCart(prev => prev.map(item =>
+            item.id === productId ? { ...item, unit } : item
         ));
     };
 
@@ -85,7 +95,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             products: cart.map(item => ({
                 id: item.id,
                 name: item.name,
-                quantity: item.quantity
+                quantity: item.quantity,
+                unit: item.unit
             })),
             delivery_request: deliveryNote,
             requested_delivery_date: deliveryDate
@@ -101,6 +112,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             removeFromCart,
             clearCart,
             updateQuantity,
+            updateUnit,
             totalItems,
             requestQuote
         }}>
