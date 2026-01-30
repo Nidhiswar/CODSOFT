@@ -65,7 +65,6 @@ router.post("/login", async (req, res) => {
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
         res.json({ token, user: { id: user._id, username: user.username, email: user.email, role: user.role, cart: user.cart, hasConsented: user.hasConsented, isFirstLogin: user.isFirstLogin, showConsentOverlay } });
-        res.json({ token, user: { id: user._id, username: user.username, email: user.email, role: user.role, cart: user.cart, hasConsented: user.hasConsented, isFirstLogin: user.isFirstLogin, showConsentOverlay } });
     } catch (err) {
         res.status(500).json({ message: "Server error" });
     }

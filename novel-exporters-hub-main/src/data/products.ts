@@ -12,15 +12,26 @@ export interface Product {
 
 export const products: Product[] = [
   {
-    id: "curry-leaves",
-    name: "Fresh & Dry Curry Leaves",
+    id: "fresh-curry-leaves",
+    name: "Fresh Curry Leaves",
     tamilName: "கறிவேப்பிலை (Kariveppilai)",
-    description: "Aromatic curry leaves, sourced directly from the fertile lands of Tamil Nadu. Essential for South Indian cuisine, these leaves are picked at peak freshness and processed to maintain their intense flavor and color. Available in both fresh and premium cold-dried grades.",
+    description: "Premium fresh curry leaves, handpicked directly from the fertile lands of Tamil Nadu. These vibrant green leaves are harvested at peak freshness to capture their intense aroma and distinctive flavor. Essential for authentic South Indian tempering (tadka), curries, chutneys, and traditional recipes. Our fresh leaves are carefully packed to preserve their natural oils and fragrance.",
     image: "/assets/products/fresh-curry-leaves.jpg",
     category: "Leaves",
     origin: "Tamil Nadu",
     harvestTiming: "Peak: March - July",
     certifications: ["FSSAI", "ISO 22000", "IEC", "APEDA"],
+  },
+  {
+    id: "dry-curry-leaves",
+    name: "Dry Curry Leaves",
+    tamilName: "உலர் கறிவேப்பிலை (Ular Kariveppilai)",
+    description: "Premium sun-dried curry leaves from Tamil Nadu, carefully processed to retain their aromatic essence and rich green color. These dried leaves are perfect for long-term storage while maintaining the authentic flavor essential for South Indian curries, chutneys, and seasoning. Ideal for export with extended shelf life.",
+    image: "/assets/products/dry-curry-leaves.jpg",
+    category: "Leaves",
+    origin: "Tamil Nadu",
+    harvestTiming: "Year-round (Peak: March - July)",
+    certifications: ["FSSAI", "ISO 22000", "IEC", "APEDA", "Export Quality"],
   },
   {
     id: "pepper",
