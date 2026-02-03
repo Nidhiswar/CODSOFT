@@ -12,13 +12,13 @@ function About() {
   return (
     <div className="overflow-hidden bg-background text-foreground">
       {/* Hero Section */}
-      <section className="relative py-24 md:py-32 bg-zinc-950 overflow-hidden">
+      <section className="relative py-16 sm:py-20 md:py-24 lg:py-32 bg-zinc-950 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center opacity-15" />
         <div className="container-custom relative z-10 text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold font-serif text-white mb-6 animate-fade-in tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold font-serif text-white mb-4 sm:mb-6 animate-fade-in tracking-tight">
             About Novel Exporters
           </h1>
-          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto animate-fade-in font-light leading-relaxed" style={{ animationDelay: '100ms' }}>
+          <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto animate-fade-in font-light leading-relaxed px-4" style={{ animationDelay: '100ms' }}>
             Your trusted global bridge for authentic Indian spices, committed to quality, traceability, and excellence.
           </p>
         </div>
@@ -27,9 +27,9 @@ function About() {
       {/* Story Section */}
       <section className="section-padding bg-background overflow-hidden">
         <div className="container-custom">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 md:gap-16 items-center">
             <div className="relative group">
-              <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white/10 relative">
+              <div className="aspect-square rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white/10 relative">
                 <img
                   src={ourStoryImg}
                   alt="Authentic Spices Collection"
@@ -37,30 +37,30 @@ function About() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
 
-                <div className="absolute bottom-8 left-8 flex items-center gap-4 bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-spice-gold/30 shadow-[0_20px_50px_rgba(0,0,0,0.3)] scale-110">
-                  <div className="w-14 h-14 rounded-2xl bg-spice-gold flex items-center justify-center shadow-lg">
-                    <img src={novelLogo} alt="Logo" className="w-10 h-10 object-contain" />
+                <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 md:bottom-8 md:left-8 flex items-center gap-3 sm:gap-4 bg-white dark:bg-zinc-900 p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl md:rounded-3xl border border-spice-gold/30 shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:scale-100 md:scale-110">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl sm:rounded-2xl bg-spice-gold flex items-center justify-center shadow-lg">
+                    <img src={novelLogo} alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 object-contain" />
                   </div>
                   <div>
-                    <h4 className="text-foreground font-black text-lg tracking-tight">Novel Exporters</h4>
-                    <p className="text-muted-foreground text-[10px] uppercase font-black tracking-[0.2em]">Verified Export Hub</p>
+                    <h4 className="text-foreground font-black text-sm sm:text-base md:text-lg tracking-tight">Novel Exporters</h4>
+                    <p className="text-muted-foreground text-[8px] sm:text-[9px] md:text-[10px] uppercase font-black tracking-[0.15em] sm:tracking-[0.2em]">Verified Export Hub</p>
                   </div>
                 </div>
               </div>
 
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary rounded-full flex items-center justify-center p-6 shadow-2xl rotate-12 group-hover:rotate-0 transition-transform">
+              <div className="absolute -bottom-6 -right-6 sm:-bottom-8 sm:-right-8 md:-bottom-10 md:-right-10 w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 bg-primary rounded-full hidden sm:flex items-center justify-center p-4 sm:p-5 md:p-6 shadow-2xl rotate-12 group-hover:rotate-0 transition-transform">
                 <div className="text-center text-white">
-                  <span className="text-4xl font-black block">10+</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">Years Expertise</span>
+                  <span className="text-2xl sm:text-3xl md:text-4xl font-black block">10+</span>
+                  <span className="text-[7px] sm:text-[8px] md:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest opacity-80">Years Expertise</span>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-8">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest">
+            <div className="space-y-6 sm:space-y-8">
+              <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] sm:text-xs font-black uppercase tracking-widest">
                 Our Heritage
               </span>
-              <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-serif text-foreground leading-tight">
                 From Local Harvests to Global Tables
               </h2>
               <div className="space-y-6 text-lg text-muted-foreground font-light leading-relaxed">

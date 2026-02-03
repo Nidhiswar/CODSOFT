@@ -28,7 +28,7 @@ const ProductCard = ({ product, index = 0, onClick, className }: ProductCardProp
     <motion.div
       layoutId={`card-container-${product.id}`}
       onClick={() => onClick && onClick(product)}
-      className={`group relative overflow-hidden rounded-[2rem] bg-white/5 dark:bg-black/20 backdrop-blur-xl shadow-2xl border border-white/10 cursor-pointer h-full flex flex-col ${className}`}
+      className={`group relative overflow-hidden rounded-xl sm:rounded-2xl md:rounded-[2rem] bg-white/5 dark:bg-black/20 backdrop-blur-xl shadow-2xl border border-white/10 cursor-pointer h-full flex flex-col ${className}`}
       initial={{ opacity: 0, scale: 0.85, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -64,7 +64,7 @@ const ProductCard = ({ product, index = 0, onClick, className }: ProductCardProp
         {/* Glass Tag */}
         <motion.div
           layoutId={`badge-${product.id}`}
-          className="absolute top-4 right-4 px-4 py-1.5 rounded-full bg-spice-gold shadow-lg shadow-black/20 text-black text-[10px] font-black uppercase tracking-widest border border-white/20"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-full bg-spice-gold shadow-lg shadow-black/20 text-black text-[8px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest border border-white/20"
         >
           {product.category}
         </motion.div>
@@ -72,7 +72,7 @@ const ProductCard = ({ product, index = 0, onClick, className }: ProductCardProp
         {/* Floating Add to Cart Button */}
         <button
           onClick={handleAddToCart}
-          className="absolute bottom-4 right-4 w-12 h-12 rounded-2xl bg-spice-gold text-black flex items-center justify-center shadow-2xl transition-all duration-150 hover:scale-110 hover:rotate-3 active:scale-90 group/cart overflow-hidden"
+          className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-spice-gold text-black flex items-center justify-center shadow-2xl transition-all duration-150 hover:scale-110 hover:rotate-3 active:scale-90 group/cart overflow-hidden"
         >
           <AnimatePresence mode="wait">
             {isAdded ? (
@@ -101,22 +101,22 @@ const ProductCard = ({ product, index = 0, onClick, className }: ProductCardProp
       </div>
 
       {/* Info Content */}
-      <div className="p-6 flex flex-col flex-grow relative">
+      <div className="p-4 sm:p-5 md:p-6 flex flex-col flex-grow relative">
         <motion.h3
           layoutId={`product-title-${product.id}`}
-          className="text-xl font-bold font-serif text-foreground mb-1 group-hover:text-primary transition-colors"
+          className="text-base sm:text-lg md:text-xl font-bold font-serif text-foreground mb-1 group-hover:text-primary transition-colors"
         >
           {product.name}
         </motion.h3>
 
         <motion.p
           layoutId={`product-tamil-${product.id}`}
-          className="text-xs font-semibold text-primary/80 italic mb-4"
+          className="text-[10px] sm:text-xs font-semibold text-primary/80 italic mb-3 sm:mb-4"
         >
           {product.tamilName}
         </motion.p>
 
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-6">
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-4 sm:mb-6">
           {product.description}
         </p>
 

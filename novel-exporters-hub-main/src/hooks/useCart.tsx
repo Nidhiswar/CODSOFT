@@ -85,7 +85,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('cart');
     };
 
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const totalItems = cart.length;
 
     const requestQuote = async (deliveryNote?: string, deliveryDate?: string) => {
         const token = localStorage.getItem('token');

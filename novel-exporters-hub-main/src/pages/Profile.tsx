@@ -99,7 +99,7 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
     try {
       setIsSubmitting(true);
       await requestQuote(deliveryNote, requestedDeliveryDate);
-      toast.success("✅ Quotation request sent! Our team will respond within 24-48 hours.");
+      toast.success("Quotation request sent! Our team will respond within 24-48 hours.");
       setDeliveryNote("");
       setRequestedDeliveryDate("");
       fetchOrders();
@@ -112,52 +112,52 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] dark:bg-zinc-950 pt-24 pb-20">
+    <div className="min-h-screen bg-[#FDFCFB] dark:bg-zinc-950 pt-20 sm:pt-24 pb-12 sm:pb-20">
       <div className="container-custom max-w-6xl">
         {/* Profile Header Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-8 md:p-12 rounded-[3rem] bg-white dark:bg-zinc-900 border border-border shadow-xl mb-12 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden"
+          className="p-5 sm:p-6 md:p-8 lg:p-12 rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] bg-white dark:bg-zinc-900 border border-border shadow-xl mb-6 sm:mb-8 md:mb-12 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 md:gap-8 relative overflow-hidden"
         >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute top-0 right-0 w-48 sm:w-64 h-48 sm:h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
-          <div className="flex items-center gap-6 relative z-10">
-            <div className="w-24 h-24 rounded-[2rem] bg-gradient-to-br from-spice-gold to-primary flex items-center justify-center text-white shadow-2xl">
-              <User className="w-12 h-12" />
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 relative z-10 text-center sm:text-left">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl sm:rounded-2xl md:rounded-[2rem] bg-gradient-to-br from-spice-gold to-primary flex items-center justify-center text-white shadow-2xl">
+              <User className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold font-serif text-foreground mb-1">{user.email.split('@')[0].toUpperCase()}</h1>
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full border border-primary/20">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-serif text-foreground mb-1">{user.email.split('@')[0].toUpperCase()}</h1>
+              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+                <span className="px-2 sm:px-3 py-1 bg-primary/10 text-primary text-[9px] sm:text-[10px] font-black uppercase rounded-full border border-primary/20">
                   {user.isAdmin ? "Administrator" : "User Profile"}
                 </span>
-                <span className="text-xs text-muted-foreground">{user.email}</span>
+                <span className="text-xs text-muted-foreground truncate max-w-[200px]">{user.email}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 relative z-10">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3 relative z-10 w-full md:w-auto">
             {user.isAdmin && (
-              <Button variant="warm" onClick={() => navigate("/admin")} className="rounded-2xl">
+              <Button variant="warm" onClick={() => navigate("/admin")} className="rounded-xl sm:rounded-2xl text-sm">
                 <Shield className="w-4 h-4 mr-2" />
                 Admin Dashboard
               </Button>
             )}
-            <Button variant="outline" onClick={handleLogout} className="rounded-2xl text-red-500 hover:bg-red-50 border-red-100">
+            <Button variant="outline" onClick={handleLogout} className="rounded-xl sm:rounded-2xl text-red-500 hover:bg-red-50 border-red-100 text-sm">
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>
           </div>
         </motion.div>
 
-        <div className="grid lg:grid-cols-4 gap-8">
+        <div className="grid lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
           {/* Sidebar Navigation - Hide for Admin */}
           {!user.isAdmin && (
-            <div className="lg:col-span-1 space-y-3">
+            <div className="lg:col-span-1 flex lg:flex-col gap-2 sm:gap-3 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
               <button
                 onClick={() => setView("cart")}
-                className={`w-full flex items-center justify-between p-5 rounded-3xl transition-all ${view === 'cart' ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' : 'bg-card text-muted-foreground hover:bg-muted/50'}`}
+                className={`flex-shrink-0 lg:w-full flex items-center justify-between p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl md:rounded-3xl transition-all ${view === 'cart' ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' : 'bg-card text-muted-foreground hover:bg-muted/50'}`}
               >
                 <div className="flex items-center gap-3 font-bold">
                   <ShoppingBag className="w-5 h-5" />
@@ -173,15 +173,15 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
                 onClick={() => setView("history")}
                 className={`w-full flex items-center justify-between p-5 rounded-3xl transition-all ${view === 'history' ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' : 'bg-card text-muted-foreground hover:bg-muted/50'}`}
               >
-                <div className="flex items-center gap-3 font-bold">
-                  <Clock className="w-5 h-5" />
-                  Request History
+                <div className="flex items-center gap-2 sm:gap-3 font-bold text-sm sm:text-base">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="whitespace-nowrap">Request History</span>
                 </div>
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 hidden lg:block" />
               </button>
-              <div className="p-6 rounded-3xl bg-spice-gold/5 border border-spice-gold/20 mt-8">
-                <Info className="w-6 h-6 text-spice-gold mb-3" />
-                <p className="text-xs text-muted-foreground leading-relaxed">
+              <div className="hidden lg:block p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-spice-gold/5 border border-spice-gold/20 mt-4 sm:mt-8">
+                <Info className="w-5 h-5 sm:w-6 sm:h-6 text-spice-gold mb-2 sm:mb-3" />
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed">
                   Need help with your request? Our export team is available 24/7 for shipping consultation.
                 </p>
               </div>
@@ -191,13 +191,10 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
           {/* Admin Profile Content */}
           {user.isAdmin && (
             <div className="lg:col-span-4">
-              <div className="p-8 bg-card border border-border rounded-[2.5rem] shadow-sm text-center">
-                <Shield className="w-16 h-16 text-primary mx-auto mb-4" />
-                <h2 className="text-2xl font-bold font-serif mb-2">Administrator Account</h2>
-                <p className="text-muted-foreground mb-6">
-                  As an admin, you manage orders and users from the Admin Dashboard.
-                </p>
-                <Button variant="warm" onClick={() => navigate("/admin")} className="rounded-2xl">
+              <div className="p-5 sm:p-6 md:p-8 bg-card border border-border rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] shadow-sm text-center">
+                <Shield className="w-12 h-12 sm:w-16 sm:h-16 text-primary mx-auto mb-3 sm:mb-4" />
+                <h2 className="text-xl sm:text-2xl font-bold font-serif mb-2">Administrator Account</h2>
+                <Button variant="warm" onClick={() => navigate("/admin")} className="rounded-xl sm:rounded-2xl">
                   <Shield className="w-4 h-4 mr-2" />
                   Go to Admin Dashboard
                 </Button>
@@ -323,7 +320,7 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
                         className="rounded-2xl flex items-center gap-2"
                       >
                         <Download className="w-4 h-4" />
-                        Download CSV
+                        Download Order Record
                       </Button>
                     )}
                   </div>
@@ -357,13 +354,62 @@ const Profile = ({ user, onLogout }: ProfileProps) => {
                             </div>
                           </div>
 
-                          <div className="flex gap-2 flex-wrap mb-6">
-                            {order.products.map((p: any, i: number) => (
-                              <div key={i} className="px-3 py-1 bg-muted/50 rounded-lg text-xs font-bold border border-border">
-                                {p.name} <span className="text-primary ml-1">x{p.quantity}</span>
+                          {/* Show detailed pricing for confirmed orders */}
+                          {order.status === 'confirmed' && order.total_amount ? (
+                            <div className="mb-6">
+                              <div className="p-4 rounded-2xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+                                <h4 className="text-xs font-black uppercase tracking-wider text-green-700 dark:text-green-400 mb-3">💰 Confirmed Quote - Product Pricing</h4>
+                                <div className="space-y-2">
+                                  {order.products.map((p: any, i: number) => {
+                                    const currencySymbol = {'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ', 'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'}[order.currency || 'INR'] || '₹';
+                                    return (
+                                      <div key={i} className="flex justify-between items-center py-2 border-b border-green-200/50 dark:border-green-800/50 last:border-0">
+                                        <div>
+                                          <span className="font-semibold text-sm">{p.name}</span>
+                                          <span className="text-xs text-muted-foreground ml-2">({p.quantity} {p.unit || 'kg'})</span>
+                                        </div>
+                                        <div className="text-right">
+                                          {p.unit_price && (
+                                            <p className="text-[10px] text-muted-foreground">
+                                              {currencySymbol}{p.unit_price?.toLocaleString()} × {p.quantity}
+                                            </p>
+                                          )}
+                                          <p className="font-bold text-green-700 dark:text-green-400">
+                                            {currencySymbol}{(p.total_price || 0).toLocaleString()}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                <div className="mt-4 pt-3 border-t-2 border-green-300 dark:border-green-700 flex justify-between items-center">
+                                  <span className="font-bold text-green-800 dark:text-green-300">Grand Total</span>
+                                  <span className="text-xl font-black text-green-700 dark:text-green-400">
+                                    {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ', 'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'}[order.currency || 'INR'] || '₹'}
+                                    {(order.total_amount || 0).toLocaleString()} {order.currency || 'INR'}
+                                  </span>
+                                </div>
+                                {order.estimated_delivery_date && (
+                                  <p className="mt-3 text-xs text-green-600 dark:text-green-500">
+                                    📦 Estimated Delivery: {new Date(order.estimated_delivery_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                  </p>
+                                )}
+                                {order.price_updated_at && (
+                                  <p className="text-[10px] text-muted-foreground mt-1">
+                                    Last price update: {new Date(order.price_updated_at).toLocaleString()}
+                                  </p>
+                                )}
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2 flex-wrap mb-6">
+                              {order.products.map((p: any, i: number) => (
+                                <div key={i} className="px-3 py-1 bg-muted/50 rounded-lg text-xs font-bold border border-border">
+                                  {p.name} <span className="text-primary ml-1">x{p.quantity} {p.unit || 'kg'}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
                           {order.admin_notes && (
                             <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex gap-3">

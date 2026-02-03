@@ -58,10 +58,10 @@ const Login = ({ onLogin }: LoginProps) => {
         // Check if admin email - redirect to admin dashboard
         const isAdmin = res.user.role === 'admin' && res.user.email === 'novelexporters@gmail.com';
         if (isAdmin) {
-          toast.success(`✅ Welcome Admin, ${res.user.username}!`);
+          toast.success(`Welcome Admin, ${res.user.username}!`);
           navigate("/admin");
         } else {
-          toast.success(isLogin ? `✅ Welcome back, ${res.user.username}!` : "✅ Account created successfully! Explore our products.");
+          toast.success(isLogin ? `Welcome back, ${res.user.username}!` : "Account created successfully! Explore our products.");
           navigate("/");
         }
       } else {
@@ -75,7 +75,7 @@ const Login = ({ onLogin }: LoginProps) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden py-20 px-4">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden py-12 sm:py-16 md:py-20 px-4">
       {/* Background with higher quality assets */}
       <div className="absolute inset-0 bg-zinc-950" />
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center opacity-30" />
@@ -83,25 +83,25 @@ const Login = ({ onLogin }: LoginProps) => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(196,160,82,0.1),transparent_50%)]" />
 
       {/* Dynamic Orbs */}
-      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
-      <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-spice-gold/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/4 -left-20 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 bg-primary/10 rounded-full blur-[80px] sm:blur-[100px] animate-pulse" />
+      <div className="absolute bottom-1/4 -right-20 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 bg-spice-gold/10 rounded-full blur-[80px] sm:blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
 
       {/* Form Container */}
       <div className="relative z-10 w-full max-w-md">
-        <div className="p-8 md:p-12 rounded-[2.5rem] bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl">
+        <div className="p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl">
           {/* Logo/Brand */}
-          <div className="text-center mb-10">
-            <div className="flex flex-col items-center justify-center gap-4 mb-6">
-              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-spice-gold via-white to-primary flex items-center justify-center shadow-[0_0_50px_rgba(196,160,82,0.3)] p-1 group hover:scale-105 transition-transform duration-500">
-                <div className="w-full h-full bg-white rounded-[1.4rem] flex items-center justify-center overflow-hidden">
-                  <img src={novelLogo} alt="Logo" className="w-20 h-20 object-contain drop-shadow-xl" />
+          <div className="text-center mb-6 sm:mb-8 md:mb-10">
+            <div className="flex flex-col items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-spice-gold via-white to-primary flex items-center justify-center shadow-[0_0_50px_rgba(196,160,82,0.3)] p-1 group hover:scale-105 transition-transform duration-500">
+                <div className="w-full h-full bg-white rounded-xl sm:rounded-[1.4rem] flex items-center justify-center overflow-hidden">
+                  <img src={novelLogo} alt="Logo" className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-xl" />
                 </div>
               </div>
-              <h1 className="text-4xl font-bold font-serif text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-serif text-white tracking-tight">
                 Novel Exporters
               </h1>
             </div>
-            <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+            <div className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
               <p className="text-zinc-300 text-xs font-medium leading-relaxed italic">
                 {isLogin
                   ? "👋 Welcome back. Sign in to manage your orders and track international shipping."

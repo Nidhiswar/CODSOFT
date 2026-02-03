@@ -2,24 +2,26 @@ import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin } from "lucide-react";
 import novelLogo from "@/assets/novel-logo-dynamic.png";
 import { socials } from "@/data/socials";
+import FooterSpiceDecoration from "../SpiceBackgroundAnimation";
 
 const Footer = () => {
   return (
-    <footer className="bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-t border-zinc-200 dark:border-white/5 transition-colors duration-300">
-      <div className="container-custom py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+    <footer className="relative bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-t border-zinc-200 dark:border-white/5 transition-colors duration-300 overflow-hidden">
+      <FooterSpiceDecoration />
+      <div className="container-custom py-10 sm:py-12 md:py-16 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 md:gap-12">
           {/* Company Info */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center gap-3">
               <div className="rounded-xl p-2 bg-white dark:bg-white/5 shadow-sm transition-all duration-300 hover:shadow-md group">
                 <img
                   src={novelLogo}
                   alt="Novel Exporters Logo"
-                  className="h-14 w-auto object-contain transition-transform duration-500 group-hover:scale-110"
+                  className="h-10 sm:h-12 md:h-14 w-auto object-contain transition-transform duration-500 group-hover:scale-110"
                 />
               </div>
             </div>
-            <p className="text-sm leading-relaxed">
+            <p className="text-xs sm:text-sm leading-relaxed">
               Exporting the finest quality spices from Tamil Nadu to the world.
               Our commitment to excellence ensures you receive nature's best flavors.
             </p>
@@ -27,8 +29,8 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-lg font-bold font-serif text-zinc-900 dark:text-white mb-6">Quick Links</h4>
-            <ul className="space-y-3">
+            <h4 className="text-base sm:text-lg font-bold font-serif text-zinc-900 dark:text-white mb-4 sm:mb-6">Quick Links</h4>
+            <ul className="space-y-2 sm:space-y-3">
               {[
                 { name: "Home", path: "/" },
                 { name: "About Us", path: "/about" },
@@ -39,7 +41,7 @@ const Footer = () => {
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="hover:text-spice-gold transition-colors duration-300 text-sm flex items-center gap-2 group font-medium"
+                    className="hover:text-spice-gold transition-colors duration-300 text-xs sm:text-sm flex items-center gap-2 group font-medium"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-spice-gold opacity-0 group-hover:opacity-100 transition-all scale-0 group-hover:scale-100" />
                     {link.name}

@@ -115,11 +115,20 @@ export const api = {
         return res.json();
     },
 
-    updateOrderStatus: async (orderId: string, status: string, admin_notes: string) => {
+    updateOrderStatus: async (orderId: string, status: string, admin_notes: string, estimated_delivery_date?: string) => {
         const res = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
             method: "PUT",
             headers: getHeaders(),
-            body: JSON.stringify({ status, admin_notes }),
+            body: JSON.stringify({ status, admin_notes, estimated_delivery_date }),
+        });
+        return res.json();
+    },
+
+    updateOrderPricing: async (orderId: string, products: any[], currency: string, notes?: string) => {
+        const res = await fetch(`${API_BASE_URL}/orders/${orderId}/pricing`, {
+            method: "PUT",
+            headers: getHeaders(),
+            body: JSON.stringify({ products, currency, notes }),
         });
         return res.json();
     },

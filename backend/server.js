@@ -4,6 +4,10 @@ const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const nodemailer = require("nodemailer");
 const cors = require("cors");
+const dns = require("dns");
+
+// Use Google DNS to resolve MongoDB Atlas SRV records
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
@@ -11,6 +15,7 @@ const mongoose = require("mongoose");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const authRoutes = require("./routes/authRoutes");
 const enquiryRoutes = require("./routes/enquiryRoutes");
+const { startDeliveryReminderScheduler, triggerDeliveryReminders } = require("./utils/deliveryReminder");
 
 const app = express();
 
@@ -32,6 +37,9 @@ mongoose.connect(MONGODB_URI, {
 })
 .then(() => {
   console.log("🚀 MongoDB Integrated Successfully");
+
+  // Start the delivery reminder scheduler
+  startDeliveryReminderScheduler();
 
   app.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);
@@ -81,13 +89,15 @@ app.get("/api/health", (req, res) => {
     services: {
       mongodb: mongoConnected ? "Connected" : "Disconnected",
       googleAI: googleKeyConfigured ? "Configured" : "Missing GOOGLE_API_KEY",
-      ollama: "Check http://127.0.0.1:11434 manually"
+      ollama: "Check http://127.0.0.1:11434 manually",
+      deliveryReminder: "Scheduler Active (9:00 AM IST daily)"
     },
     endpoints: {
       auth: "/api/auth",
       enquiry: "/api/enquiry",
       orders: "/api/orders",
-      chat: "/api/chat"
+      chat: "/api/chat",
+      triggerReminders: "/api/admin/trigger-delivery-reminders (POST)"
     }
   });
 });
@@ -106,6 +116,25 @@ const orderRoutes = require("./routes/orderRoutes");
 app.use("/api/auth", authRoutes);
 app.use("/api/enquiry", enquiryRoutes);
 app.use("/api/orders", orderRoutes);
+
+// Manual trigger for delivery reminders (Admin only - for testing)
+app.post("/api/admin/trigger-delivery-reminders", async (req, res) => {
+  try {
+    // You can add auth middleware here for security
+    await triggerDeliveryReminders();
+    res.json({ 
+      success: true, 
+      message: "Delivery reminder check triggered successfully" 
+    });
+  } catch (err) {
+    console.error("❌ Error triggering delivery reminders:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to trigger delivery reminders",
+      error: err.message 
+    });
+  }
+});
 
 // Initialize Google Generative AI (Google AI Studio)
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
@@ -295,7 +324,7 @@ RESPONSE GUIDELINES:
 4. Maintain a professional, warm, and knowledgeable tone befitting a premium spice brand
 5. Use appropriate emojis sparingly to enhance responses (🌿🌶️💚🤎✨📦✈️🚢📧📞)
 6. If you don't know something specific, provide the contact email and phone number
-7. Support multilingual responses when requested (English, Hindi, Tamil, German, Japanese, etc.)
+7. **MULTI-LINGUAL SUPPORT (CRITICAL):** Automatically detect the language of the user's message and ALWAYS respond in the SAME language. If the user writes in Tamil, respond entirely in Tamil. If in Hindi, respond in Hindi. If in German, respond in German. If in Japanese, respond in Japanese. Match the user's language exactly without them needing to ask.
 8. For shipping queries, mention both air (48-72h) and sea (Tuticorin/Kochi) options
 9. Highlight certifications (FSSAI, ISO 22000, IEC) when discussing quality
 10. Be helpful with related topics like spice usage, storage tips, and culinary applications

@@ -22,8 +22,17 @@ const AdminDashboard = () => {
     const [users, setUsers] = useState<any[]>([]);
     const [analytics, setAnalytics] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
     const [editingOrder, setEditingOrder] = useState<string | null>(null);
-    const [pricingData, setPricingData] = useState<{[key: string]: { pricing: string; timeline: string; notes: string }}>({});
+    const [editingPrices, setEditingPrices] = useState<string | null>(null); // For editing prices after confirmation
+    const [processingOrders, setProcessingOrders] = useState<Set<string>>(new Set());
+    const [pricingData, setPricingData] = useState<{[key: string]: { 
+        productPrices: {[productIndex: number]: number}; 
+        currency: string; 
+        deliveryDate: string; 
+        notes: string 
+    }}>({}); 
     const navigate = useNavigate();
     const { user, loading: authLoading } = useAuth();
     const adminEmail = "novelexporters@gmail.com";
@@ -43,8 +52,12 @@ const AdminDashboard = () => {
         }
     }, [user]);
 
-    const fetchData = async () => {
-        setIsLoading(true);
+    const fetchData = async (showRefreshState = false) => {
+        if (showRefreshState) {
+            setIsRefreshing(true);
+        } else {
+            setIsLoading(true);
+        }
         try {
             const [oRes, eRes, aRes, uRes] = await Promise.all([
                 api.getAllOrders(),
@@ -56,33 +69,94 @@ const AdminDashboard = () => {
             setEnquiries(eRes);
             setAnalytics(aRes);
             setUsers(uRes);
+            if (showRefreshState) {
+                toast.success("Data refreshed");
+            }
         } catch (err) {
             toast.error("Failed to load admin data");
         } finally {
             setIsLoading(false);
+            setIsRefreshing(false);
         }
     };
 
-    const updateStatus = async (orderId: string, status: string, customNotes?: string) => {
+    const handleRefresh = () => {
+        fetchData(true);
+    };
+
+    const updateStatus = async (orderId: string, status: string, customNotes?: string, deliveryDate?: string) => {
+        // Optimistic UI update - immediately update the order in state
+        setOrders(prev => prev.map(order => 
+            order._id === orderId 
+                ? { ...order, status, admin_notes: customNotes || order.admin_notes }
+                : order
+        ));
+        setEditingOrder(null);
+        toast.success(`Order set to ${status}`);
+        
+        // Mark as processing
+        setProcessingOrders(prev => new Set(prev).add(orderId));
+        
         try {
             const notes = customNotes || `Status updated to ${status} by admin on ${new Date().toLocaleDateString()}`;
-            await api.updateOrderStatus(orderId, status, notes);
-            toast.success(`Order set to ${status}`);
-            setEditingOrder(null);
+            await api.updateOrderStatus(orderId, status, notes, deliveryDate);
+            // Background refresh to sync with server (non-blocking)
             fetchData();
         } catch (err) {
-            toast.error("Update failed");
+            // Revert on error
+            toast.error("Update failed - reverting changes");
+            fetchData();
+        } finally {
+            setProcessingOrders(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(orderId);
+                return newSet;
+            });
         }
     };
 
     const updateOrderWithPricingTimeline = async (orderId: string, status: string) => {
         const data = pricingData[orderId];
-        if (!data) {
-            toast.error("Please fill in pricing and timeline details");
+        const order = orders.find(o => o._id === orderId);
+        if (!data || !order) {
+            toast.error("Please fill in pricing and delivery date details");
             return;
         }
-        const notes = `Pricing: ${data.pricing || 'TBD'} | Timeline: ${data.timeline || 'TBD'} | Notes: ${data.notes || 'None'}`;
-        await updateStatus(orderId, status, notes);
+        if (!data.deliveryDate) {
+            toast.error("Please select an estimated delivery date");
+            return;
+        }
+        
+        // Check if at least one product has a price
+        const hasAnyPrice = Object.values(data.productPrices || {}).some(price => price > 0);
+        if (!hasAnyPrice) {
+            toast.error("Please set price for at least one product");
+            return;
+        }
+
+        const currencySymbols: {[key: string]: string} = {
+            'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ',
+            'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'
+        };
+        const symbol = currencySymbols[data.currency || 'INR'] || '';
+        
+        // Calculate total from individual product prices
+        let totalAmount = 0;
+        const products = order.products.map((p: any, index: number) => {
+            const unitPrice = data.productPrices?.[index] || 0;
+            const totalPrice = unitPrice * p.quantity;
+            totalAmount += totalPrice;
+            return { unit_price: unitPrice };
+        });
+
+        const formattedDate = new Date(data.deliveryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        const notes = `Total: ${symbol}${totalAmount.toLocaleString()} ${data.currency || 'INR'} | Estimated Delivery: ${formattedDate} | Notes: ${data.notes || 'None'}`;
+        
+        // First update pricing
+        await api.updateOrderPricing(orderId, products, data.currency || 'INR', data.notes);
+        
+        // Then update status
+        await updateStatus(orderId, status, notes, data.deliveryDate);
         setPricingData(prev => {
             const updated = { ...prev };
             delete updated[orderId];
@@ -90,8 +164,93 @@ const AdminDashboard = () => {
         });
     };
 
+    // Update prices for already confirmed orders
+    const updateExistingOrderPrices = async (orderId: string) => {
+        const data = pricingData[orderId];
+        const order = orders.find(o => o._id === orderId);
+        if (!data || !order) {
+            toast.error("Please fill in pricing details");
+            return;
+        }
+
+        setProcessingOrders(prev => new Set(prev).add(orderId));
+        
+        try {
+            const products = order.products.map((p: any, index: number) => {
+                const unitPrice = data.productPrices?.[index] || p.unit_price || 0;
+                return { unit_price: unitPrice };
+            });
+
+            await api.updateOrderPricing(orderId, products, data.currency || order.currency || 'INR', data.notes);
+            toast.success("Prices updated successfully");
+            setEditingPrices(null);
+            setPricingData(prev => {
+                const updated = { ...prev };
+                delete updated[orderId];
+                return updated;
+            });
+            fetchData();
+        } catch (err) {
+            toast.error("Failed to update prices");
+        } finally {
+            setProcessingOrders(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(orderId);
+                return newSet;
+            });
+        }
+    };
+
+    // Initialize pricing data when editing an order
+    const startEditingOrder = (order: any) => {
+        setEditingOrder(order._id);
+        // Pre-fill with existing prices if available
+        const productPrices: {[key: number]: number} = {};
+        order.products.forEach((p: any, index: number) => {
+            productPrices[index] = p.unit_price || 0;
+        });
+        setPricingData(prev => ({
+            ...prev,
+            [order._id]: {
+                productPrices,
+                currency: order.currency || 'INR',
+                deliveryDate: order.estimated_delivery_date ? new Date(order.estimated_delivery_date).toISOString().split('T')[0] : '',
+                notes: ''
+            }
+        }));
+    };
+
+    // Initialize for price update on confirmed orders
+    const startEditingPrices = (order: any) => {
+        setEditingPrices(order._id);
+        const productPrices: {[key: number]: number} = {};
+        order.products.forEach((p: any, index: number) => {
+            productPrices[index] = p.unit_price || 0;
+        });
+        setPricingData(prev => ({
+            ...prev,
+            [order._id]: {
+                productPrices,
+                currency: order.currency || 'INR',
+                deliveryDate: order.estimated_delivery_date ? new Date(order.estimated_delivery_date).toISOString().split('T')[0] : '',
+                notes: ''
+            }
+        }));
+    };
+
+    // Calculate total for display
+    const calculateTotal = (orderId: string, order: any) => {
+        const data = pricingData[orderId];
+        if (!data?.productPrices) return 0;
+        return order.products.reduce((sum: number, p: any, index: number) => {
+            return sum + (data.productPrices[index] || 0) * p.quantity;
+        }, 0);
+    };
+
     // Download Order Data as PDF with Company Logo
     const downloadOrdersPDF = async () => {
+        setIsDownloading(true);
+        toast.success("Generating PDF...");
         try {
             // Convert logo to base64 for embedding in PDF
             const getLogoBase64 = (): Promise<string> => {
@@ -231,6 +390,8 @@ const AdminDashboard = () => {
             toast.success("📄 Order data PDF generated! Use Print dialog to save as PDF.");
         } catch (err) {
             toast.error("Failed to generate PDF report");
+        } finally {
+            setIsDownloading(false);
         }
     };
 
@@ -432,12 +593,30 @@ const AdminDashboard = () => {
                         </p>
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
-                        <Button variant="outline" onClick={fetchData} className="rounded-xl">Refresh Data</Button>
-                        <Button variant="outline" onClick={downloadOrdersPDF} className="rounded-xl border-green-500/30 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/20">
-                            <Download className="w-4 h-4 mr-2" />
-                            Download Orders PDF
+                        <Button 
+                            variant="warm" 
+                            onClick={handleRefresh} 
+                            disabled={isRefreshing}
+                            className="rounded-xl shadow-lg shadow-primary/20 disabled:opacity-70"
+                        >
+                            {isRefreshing ? (
+                                <><span className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" /> Refreshing...</>
+                            ) : (
+                                'Refresh Data'
+                            )}
                         </Button>
-                        <Button variant="warm" onClick={generatePDFReport} className="rounded-xl shadow-lg shadow-primary/20">Generate Export Report</Button>
+                        <Button 
+                            variant="warm" 
+                            onClick={downloadOrdersPDF} 
+                            disabled={isDownloading}
+                            className="rounded-xl shadow-lg shadow-primary/20 disabled:opacity-70"
+                        >
+                            {isDownloading ? (
+                                <><span className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</>
+                            ) : (
+                                <><Download className="w-4 h-4 mr-2" /> Download Orders PDF</>
+                            )}
+                        </Button>
                     </div>
                 </div>
 
@@ -446,8 +625,8 @@ const AdminDashboard = () => {
                     {[
                         { label: "Active Requests", value: orders.length, icon: Package, color: "text-blue-500", bg: "bg-blue-500/10" },
                         { label: "New Enquiries", value: enquiries.length, icon: Mail, color: "text-green-500", bg: "bg-green-500/10" },
-                        { label: "Partner Interest", value: Object.keys(analytics?.productStats || {}).length, icon: TrendingUp, color: "text-spice-gold", bg: "bg-spice-gold/10" },
-                        { label: "Managed Items", value: Object.values(analytics?.productStats || {}).reduce((a: any, b: any) => a + b, 0), icon: ShoppingCart, color: "text-indigo-500", bg: "bg-indigo-500/10" }
+                        { label: "Partner Interest", value: new Set(orders.map((o: any) => o.user?._id || o.user)).size, icon: TrendingUp, color: "text-spice-gold", bg: "bg-spice-gold/10" },
+                        { label: "Managed Items", value: Object.keys(analytics?.productStats || {}).length, icon: ShoppingCart, color: "text-indigo-500", bg: "bg-indigo-500/10" }
                     ].map((stat, i) => (
                         <motion.div
                             key={i}
@@ -530,7 +709,7 @@ const AdminDashboard = () => {
                                                     <div key={name} className="space-y-1">
                                                         <div className="flex justify-between text-xs font-bold">
                                                             <span>{name}</span>
-                                                            <span>{qty} units</span>
+                                                            <span>{qty >= 1000 ? `${(qty / 1000).toFixed(1)} kg` : `${qty} g`}</span>
                                                         </div>
                                                         <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                                                             <div
@@ -556,8 +735,17 @@ const AdminDashboard = () => {
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                             <input className="pl-10 pr-4 py-2 rounded-xl bg-muted/50 border-none text-sm w-64" placeholder="Search orders..." />
                                         </div>
-                                        <Button variant="outline" onClick={downloadOrdersPDF} className="rounded-xl text-xs">
-                                            <Download className="w-4 h-4 mr-1" /> Export PDF
+                                        <Button 
+                                            variant="warm" 
+                                            onClick={downloadOrdersPDF} 
+                                            disabled={isDownloading}
+                                            className="rounded-xl text-xs shadow-lg shadow-primary/20 disabled:opacity-70"
+                                        >
+                                            {isDownloading ? (
+                                                <><span className="w-3 h-3 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</>
+                                            ) : (
+                                                <><Download className="w-4 h-4 mr-1" /> Export PDF</>
+                                            )}
                                         </Button>
                                     </div>
                                 </div>
@@ -629,32 +817,46 @@ const AdminDashboard = () => {
                                                 <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 mb-4">
                                                     <div className="flex items-center gap-2 mb-4">
                                                         <DollarSign className="w-5 h-5 text-blue-600" />
-                                                        <h4 className="font-bold text-blue-700 dark:text-blue-400">Provide Pricing & Timeline</h4>
+                                                        <h4 className="font-bold text-blue-700 dark:text-blue-400">Set Individual Product Prices</h4>
                                                     </div>
+                                                    
+                                                    {/* Currency and Delivery Date Row */}
                                                     <div className="grid md:grid-cols-3 gap-4 mb-4">
                                                         <div>
-                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Pricing (₹/USD)</label>
-                                                            <Input
-                                                                placeholder="e.g., ₹50,000 or $600"
-                                                                value={pricingData[order._id]?.pricing || ''}
+                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Currency</label>
+                                                            <select
+                                                                value={pricingData[order._id]?.currency || 'INR'}
                                                                 onChange={(e) => setPricingData(prev => ({
                                                                     ...prev,
-                                                                    [order._id]: { ...prev[order._id], pricing: e.target.value }
+                                                                    [order._id]: { ...prev[order._id], currency: e.target.value }
                                                                 }))}
-                                                                className="rounded-lg"
-                                                            />
+                                                                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                                            >
+                                                                <option value="INR">₹ INR</option>
+                                                                <option value="USD">$ USD</option>
+                                                                <option value="EUR">€ EUR</option>
+                                                                <option value="GBP">£ GBP</option>
+                                                                <option value="AED">د.إ AED</option>
+                                                                <option value="SAR">﷼ SAR</option>
+                                                                <option value="AUD">A$ AUD</option>
+                                                                <option value="CAD">C$ CAD</option>
+                                                                <option value="SGD">S$ SGD</option>
+                                                                <option value="JPY">¥ JPY</option>
+                                                            </select>
                                                         </div>
                                                         <div>
-                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Delivery Timeline</label>
-                                                            <Input
-                                                                placeholder="e.g., 15-20 days"
-                                                                value={pricingData[order._id]?.timeline || ''}
+                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Estimated Delivery Date</label>
+                                                            <input
+                                                                type="date"
+                                                                min={new Date().toISOString().split('T')[0]}
+                                                                value={pricingData[order._id]?.deliveryDate || ''}
                                                                 onChange={(e) => setPricingData(prev => ({
                                                                     ...prev,
-                                                                    [order._id]: { ...prev[order._id], timeline: e.target.value }
+                                                                    [order._id]: { ...prev[order._id], deliveryDate: e.target.value }
                                                                 }))}
-                                                                className="rounded-lg"
+                                                                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                                             />
+                                                            <p className="text-[10px] text-muted-foreground mt-1">⚠️ Reminder email sent 1 day before</p>
                                                         </div>
                                                         <div>
                                                             <label className="text-xs font-bold text-muted-foreground mb-1 block">Additional Notes</label>
@@ -669,13 +871,69 @@ const AdminDashboard = () => {
                                                             />
                                                         </div>
                                                     </div>
+
+                                                    {/* Individual Product Pricing */}
+                                                    <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 mb-4 border border-border">
+                                                        <h5 className="text-xs font-bold uppercase text-muted-foreground mb-3">Product Pricing (per unit)</h5>
+                                                        <div className="space-y-3">
+                                                            {order.products.map((p: any, index: number) => {
+                                                                const unitPrice = pricingData[order._id]?.productPrices?.[index] || 0;
+                                                                const totalPrice = unitPrice * p.quantity;
+                                                                const currencySymbol = {'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ', 'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'}[pricingData[order._id]?.currency || 'INR'] || '₹';
+                                                                return (
+                                                                    <div key={index} className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
+                                                                        <div className="flex-1">
+                                                                            <p className="font-semibold text-sm">{p.name}</p>
+                                                                            <p className="text-xs text-muted-foreground">Qty: {p.quantity} {p.unit || 'kg'}</p>
+                                                                        </div>
+                                                                        <div className="w-32">
+                                                                            <label className="text-[10px] text-muted-foreground">Price/unit</label>
+                                                                            <Input
+                                                                                type="number"
+                                                                                placeholder="0"
+                                                                                value={unitPrice || ''}
+                                                                                onChange={(e) => setPricingData(prev => ({
+                                                                                    ...prev,
+                                                                                    [order._id]: {
+                                                                                        ...prev[order._id],
+                                                                                        productPrices: {
+                                                                                            ...prev[order._id]?.productPrices,
+                                                                                            [index]: parseFloat(e.target.value) || 0
+                                                                                        }
+                                                                                    }
+                                                                                }))}
+                                                                                className="rounded-lg h-8 text-sm"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="w-28 text-right">
+                                                                            <label className="text-[10px] text-muted-foreground">Total</label>
+                                                                            <p className="font-bold text-green-600">{currencySymbol}{totalPrice.toLocaleString()}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                        <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
+                                                            <span className="font-bold text-lg">Grand Total:</span>
+                                                            <span className="font-bold text-xl text-green-600">
+                                                                {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ', 'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'}[pricingData[order._id]?.currency || 'INR'] || '₹'}
+                                                                {calculateTotal(order._id, order).toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
                                                     <div className="flex items-center gap-2">
                                                         <Button 
                                                             size="sm" 
                                                             onClick={() => updateOrderWithPricingTimeline(order._id, 'confirmed')}
-                                                            className="bg-green-600 hover:bg-green-700 text-white rounded-lg"
+                                                            disabled={processingOrders.has(order._id)}
+                                                            className="bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50"
                                                         >
-                                                            <CheckCircle2 className="w-4 h-4 mr-1" /> Confirm with Quote
+                                                            {processingOrders.has(order._id) ? (
+                                                                <><span className="w-4 h-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processing...</>
+                                                            ) : (
+                                                                <><CheckCircle2 className="w-4 h-4 mr-1" /> Confirm with Quote</>
+                                                            )}
                                                         </Button>
                                                         <Button 
                                                             size="sm" 
@@ -689,6 +947,152 @@ const AdminDashboard = () => {
                                                 </div>
                                             ) : null}
 
+                                            {/* Price Update Section for Confirmed Orders */}
+                                            {order.status === 'confirmed' && editingPrices === order._id && (
+                                                <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 mb-4">
+                                                    <div className="flex items-center gap-2 mb-4">
+                                                        <DollarSign className="w-5 h-5 text-amber-600" />
+                                                        <h4 className="font-bold text-amber-700 dark:text-amber-400">Update Prices (Market Value Change)</h4>
+                                                    </div>
+                                                    
+                                                    <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                                        <div>
+                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Currency</label>
+                                                            <select
+                                                                value={pricingData[order._id]?.currency || order.currency || 'INR'}
+                                                                onChange={(e) => setPricingData(prev => ({
+                                                                    ...prev,
+                                                                    [order._id]: { ...prev[order._id], currency: e.target.value }
+                                                                }))}
+                                                                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
+                                                            >
+                                                                <option value="INR">₹ INR</option>
+                                                                <option value="USD">$ USD</option>
+                                                                <option value="EUR">€ EUR</option>
+                                                                <option value="GBP">£ GBP</option>
+                                                                <option value="AED">د.إ AED</option>
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Update Note (optional)</label>
+                                                            <Input
+                                                                placeholder="e.g., Market price adjustment"
+                                                                value={pricingData[order._id]?.notes || ''}
+                                                                onChange={(e) => setPricingData(prev => ({
+                                                                    ...prev,
+                                                                    [order._id]: { ...prev[order._id], notes: e.target.value }
+                                                                }))}
+                                                                className="rounded-lg"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 mb-4 border border-border">
+                                                        <div className="space-y-3">
+                                                            {order.products.map((p: any, index: number) => {
+                                                                const unitPrice = pricingData[order._id]?.productPrices?.[index] ?? p.unit_price ?? 0;
+                                                                const totalPrice = unitPrice * p.quantity;
+                                                                const currencySymbol = {'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ'}[pricingData[order._id]?.currency || order.currency || 'INR'] || '₹';
+                                                                return (
+                                                                    <div key={index} className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
+                                                                        <div className="flex-1">
+                                                                            <p className="font-semibold text-sm">{p.name}</p>
+                                                                            <p className="text-xs text-muted-foreground">Qty: {p.quantity} {p.unit || 'kg'}</p>
+                                                                        </div>
+                                                                        <div className="w-32">
+                                                                            <Input
+                                                                                type="number"
+                                                                                value={unitPrice || ''}
+                                                                                onChange={(e) => setPricingData(prev => ({
+                                                                                    ...prev,
+                                                                                    [order._id]: {
+                                                                                        ...prev[order._id],
+                                                                                        productPrices: {
+                                                                                            ...prev[order._id]?.productPrices,
+                                                                                            [index]: parseFloat(e.target.value) || 0
+                                                                                        }
+                                                                                    }
+                                                                                }))}
+                                                                                className="rounded-lg h-8 text-sm"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="w-28 text-right">
+                                                                            <p className="font-bold text-amber-600">{currencySymbol}{totalPrice.toLocaleString()}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                        <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
+                                                            <span className="font-bold">New Total:</span>
+                                                            <span className="font-bold text-xl text-amber-600">
+                                                                {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ'}[pricingData[order._id]?.currency || order.currency || 'INR'] || '₹'}
+                                                                {calculateTotal(order._id, order).toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2">
+                                                        <Button 
+                                                            size="sm" 
+                                                            onClick={() => updateExistingOrderPrices(order._id)}
+                                                            disabled={processingOrders.has(order._id)}
+                                                            className="bg-amber-600 hover:bg-amber-700 text-white rounded-lg"
+                                                        >
+                                                            {processingOrders.has(order._id) ? 'Updating...' : 'Update Prices'}
+                                                        </Button>
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="outline"
+                                                            onClick={() => setEditingPrices(null)}
+                                                            className="rounded-lg"
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Display Current Pricing for Confirmed Orders */}
+                                            {order.status === 'confirmed' && order.total_amount && editingPrices !== order._id && (
+                                                <div className="p-4 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 mb-4">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <h4 className="font-bold text-green-700 dark:text-green-400 flex items-center gap-2">
+                                                            <DollarSign className="w-4 h-4" /> Current Pricing
+                                                        </h4>
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="outline"
+                                                            onClick={() => startEditingPrices(order)}
+                                                            className="text-xs h-7 border-amber-300 text-amber-700 hover:bg-amber-50"
+                                                        >
+                                                            ✏️ Update Prices
+                                                        </Button>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        {order.products.map((p: any, i: number) => (
+                                                            <div key={i} className="flex justify-between text-sm">
+                                                                <span>{p.name} ({p.quantity} {p.unit || 'kg'})</span>
+                                                                <span className="font-semibold">
+                                                                    {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ'}[order.currency || 'INR'] || '₹'}
+                                                                    {(p.total_price || 0).toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                        <div className="pt-2 border-t border-green-200 dark:border-green-800 flex justify-between font-bold">
+                                                            <span>Total</span>
+                                                            <span className="text-green-700 dark:text-green-400">
+                                                                {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ'}[order.currency || 'INR'] || '₹'}
+                                                                {(order.total_amount || 0).toLocaleString()} {order.currency || 'INR'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    {order.price_updated_at && (
+                                                        <p className="text-[10px] text-muted-foreground mt-2">Last updated: {new Date(order.price_updated_at).toLocaleString()}</p>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             {/* Action Buttons */}
                                             <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-border">
                                                 <span className="text-xs font-bold text-muted-foreground mr-2">Update Status:</span>
@@ -696,15 +1100,17 @@ const AdminDashboard = () => {
                                                     size="sm"
                                                     variant={order.status === 'pending' ? 'default' : 'outline'}
                                                     onClick={() => updateStatus(order._id, 'pending')}
-                                                    className="rounded-lg text-xs h-8"
+                                                    disabled={processingOrders.has(order._id)}
+                                                    className="rounded-lg text-xs h-8 disabled:opacity-50"
                                                 >
                                                     <Clock className="w-3 h-3 mr-1" /> Pending
                                                 </Button>
                                                 <Button
                                                     size="sm"
                                                     variant={order.status === 'confirmed' ? 'default' : 'outline'}
-                                                    onClick={() => setEditingOrder(order._id)}
-                                                    className="rounded-lg text-xs h-8 bg-green-600 hover:bg-green-700 text-white border-green-600"
+                                                    onClick={() => startEditingOrder(order)}
+                                                    disabled={processingOrders.has(order._id)}
+                                                    className="rounded-lg text-xs h-8 bg-green-600 hover:bg-green-700 text-white border-green-600 disabled:opacity-50"
                                                 >
                                                     <CheckCircle2 className="w-3 h-3 mr-1" /> Confirm + Quote
                                                 </Button>
@@ -712,7 +1118,8 @@ const AdminDashboard = () => {
                                                     size="sm"
                                                     variant={order.status === 'rejected' ? 'default' : 'outline'}
                                                     onClick={() => updateStatus(order._id, 'rejected')}
-                                                    className="rounded-lg text-xs h-8 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
+                                                    disabled={processingOrders.has(order._id)}
+                                                    className="rounded-lg text-xs h-8 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-50"
                                                 >
                                                     <AlertCircle className="w-3 h-3 mr-1" /> Reject
                                                 </Button>
@@ -725,28 +1132,36 @@ const AdminDashboard = () => {
 
                         {activeTab === "enquiries" && (
                             <motion.div key="enq" className="p-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {enquiries.map((enq) => (
-                                        <div key={enq._id} className="p-6 rounded-3xl bg-muted/50 border border-border hover:border-primary/20 transition-all flex flex-col group">
-                                            <div className="flex items-center gap-3 mb-4">
-                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                                    <Users className="w-5 h-5" />
+                                {enquiries.length === 0 ? (
+                                    <div className="py-20 text-center">
+                                        <Mail className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
+                                        <h3 className="text-xl font-bold text-muted-foreground mb-2">No enquiries so far</h3>
+                                        <p className="text-sm text-muted-foreground/70">When customers submit enquiries through the contact form, they will appear here.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {enquiries.map((enq) => (
+                                            <div key={enq._id} className="p-6 rounded-3xl bg-muted/50 border border-border hover:border-primary/20 transition-all flex flex-col group">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                                        <Users className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="overflow-hidden">
+                                                        <p className="font-bold text-foreground text-sm truncate">{enq.username}</p>
+                                                        <p className="text-[10px] text-muted-foreground truncate">{enq.email}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="overflow-hidden">
-                                                    <p className="font-bold text-foreground text-sm truncate">{enq.username}</p>
-                                                    <p className="text-[10px] text-muted-foreground truncate">{enq.email}</p>
+                                                <div className="flex-grow">
+                                                    <p className="text-xs text-foreground/80 leading-relaxed line-clamp-4 italic">"{enq.message}"</p>
+                                                </div>
+                                                <div className="mt-6 pt-6 border-t border-border flex items-center justify-between">
+                                                    <span className="text-[10px] font-black uppercase text-muted-foreground">{new Date(enq.createdAt).toLocaleDateString()}</span>
+                                                    <Button size="sm" variant="ghost" className="h-8 px-4 rounded-lg text-[10px] font-bold uppercase hover:bg-primary hover:text-white transition-all">Reply</Button>
                                                 </div>
                                             </div>
-                                            <div className="flex-grow">
-                                                <p className="text-xs text-foreground/80 leading-relaxed line-clamp-4 italic">"{enq.message}"</p>
-                                            </div>
-                                            <div className="mt-6 pt-6 border-t border-border flex items-center justify-between">
-                                                <span className="text-[10px] font-black uppercase text-muted-foreground">{new Date(enq.createdAt).toLocaleDateString()}</span>
-                                                <Button size="sm" variant="ghost" className="h-8 px-4 rounded-lg text-[10px] font-bold uppercase hover:bg-primary hover:text-white transition-all">Reply</Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                )}
                             </motion.div>
                         )}
 
@@ -787,6 +1202,90 @@ const AdminDashboard = () => {
                                             ))}
                                         </tbody>
                                     </table>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {activeTab === "intelligence" && (
+                            <motion.div
+                                key="intel"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="p-8"
+                            >
+                                <div className="flex items-center justify-between mb-8">
+                                    <h3 className="text-2xl font-bold font-serif flex items-center gap-3">
+                                        <BarChart3 className="w-6 h-6 text-indigo-500" />
+                                        Market Intelligence
+                                    </h3>
+                                </div>
+
+                                <div className="grid lg:grid-cols-2 gap-8">
+                                    {/* Product Demand Analysis */}
+                                    <div className="p-6 rounded-3xl bg-indigo-500/5 border border-indigo-500/10">
+                                        <h4 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                            <TrendingUp className="w-5 h-5 text-indigo-500" />
+                                            Product Demand Analysis
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground mb-6">Total product-level interest across all carts and orders:</p>
+                                        <div className="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                                            {analytics?.productStats && Object.entries(analytics.productStats).sort((a: any, b: any) => b[1] - a[1]).map(([name, qty]: any) => (
+                                                <div key={name} className="space-y-2">
+                                                    <div className="flex justify-between text-sm font-bold">
+                                                        <span>{name}</span>
+                                                        <span className="text-indigo-600">{qty >= 1000 ? `${(qty / 1000).toFixed(1)} kg` : `${qty} g`}</span>
+                                                    </div>
+                                                    <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full transition-all duration-1000"
+                                                            style={{ width: `${Math.min((qty / 100) * 100, 100)}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {(!analytics?.productStats || Object.keys(analytics.productStats).length === 0) && (
+                                                <p className="text-muted-foreground text-sm italic">No product data available yet.</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Key Metrics */}
+                                    <div className="space-y-6">
+                                        <div className="p-6 rounded-3xl bg-green-500/5 border border-green-500/10">
+                                            <h4 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                                <Users className="w-5 h-5 text-green-500" />
+                                                Partner Insights
+                                            </h4>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="p-4 rounded-2xl bg-white/50 dark:bg-zinc-900/50">
+                                                    <p className="text-3xl font-black text-green-600">{users.length}</p>
+                                                    <p className="text-xs text-muted-foreground font-medium">Total Partners</p>
+                                                </div>
+                                                <div className="p-4 rounded-2xl bg-white/50 dark:bg-zinc-900/50">
+                                                    <p className="text-3xl font-black text-green-600">{new Set(orders.map((o: any) => o.user?._id || o.user)).size}</p>
+                                                    <p className="text-xs text-muted-foreground font-medium">Active Buyers</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-6 rounded-3xl bg-spice-gold/5 border border-spice-gold/10">
+                                            <h4 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                                <Package className="w-5 h-5 text-spice-gold" />
+                                                Order Summary
+                                            </h4>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="p-4 rounded-2xl bg-white/50 dark:bg-zinc-900/50">
+                                                    <p className="text-3xl font-black text-spice-gold">{orders.length}</p>
+                                                    <p className="text-xs text-muted-foreground font-medium">Total Orders</p>
+                                                </div>
+                                                <div className="p-4 rounded-2xl bg-white/50 dark:bg-zinc-900/50">
+                                                    <p className="text-3xl font-black text-spice-gold">{enquiries.length}</p>
+                                                    <p className="text-xs text-muted-foreground font-medium">Enquiries</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </motion.div>
                         )}

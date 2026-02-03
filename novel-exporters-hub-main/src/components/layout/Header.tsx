@@ -18,9 +18,7 @@ const getNavLinks = (isAdmin: boolean) => {
   
   if (isAdmin) {
     return [
-      { name: "Home", path: "/" },
       { name: "Admin Dashboard", path: "/admin" },
-      { name: "Contact Us", path: "/contact" },
     ];
   }
   
@@ -170,7 +168,7 @@ const Header = ({ user, onLogout }: HeaderProps) => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden z-50"
+                    className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-zinc-900 rounded-xl sm:rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden z-50"
                   >
                     {/* Header */}
                     <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">

@@ -346,11 +346,19 @@ router.get("/all", auth, admin, async (req, res) => {
 
 // ADMIN: Update Order Status
 router.put("/:id/status", auth, admin, async (req, res) => {
-    const { status, admin_notes } = req.body;
+    const { status, admin_notes, estimated_delivery_date } = req.body;
     try {
+        const updateData = { status, admin_notes };
+        
+        // Add estimated delivery date if provided
+        if (estimated_delivery_date) {
+            updateData.estimated_delivery_date = new Date(estimated_delivery_date);
+            updateData.delivery_reminder_sent = false; // Reset reminder flag when date changes
+        }
+        
         const order = await Order.findByIdAndUpdate(
             req.params.id,
-            { status, admin_notes },
+            updateData,
             { new: true }
         ).populate("user", "email username");
 
@@ -524,7 +532,9 @@ router.get("/analytics", auth, admin, async (req, res) => {
 
         orders.forEach(order => {
             order.products.forEach(p => {
-                productStats[p.name] = (productStats[p.name] || 0) + p.quantity;
+                // Normalize to grams for accurate aggregation
+                const quantityInGrams = p.unit === 'kg' ? p.quantity * 1000 : p.quantity;
+                productStats[p.name] = (productStats[p.name] || 0) + quantityInGrams;
             });
         });
 
@@ -543,8 +553,10 @@ router.get("/total-products-count", async (req, res) => {
 
         orders.forEach(order => {
             order.products.forEach(p => {
-                totalItemsCount += p.quantity;
-                productStats[p.name] = (productStats[p.name] || 0) + p.quantity;
+                // Normalize to grams for accurate aggregation
+                const quantityInGrams = p.unit === 'kg' ? p.quantity * 1000 : p.quantity;
+                totalItemsCount += quantityInGrams;
+                productStats[p.name] = (productStats[p.name] || 0) + quantityInGrams;
             });
         });
 
@@ -566,6 +578,117 @@ router.get("/total-products-count", async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ message: "Error calculating marketplace analytics" });
+    }
+});
+
+// ADMIN: Update Order Pricing (can be done anytime, even after confirmation)
+router.put("/:id/pricing", auth, admin, async (req, res) => {
+    const { products, currency, notes } = req.body;
+    
+    try {
+        const order = await Order.findById(req.params.id).populate("user", "email username");
+        
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        // Update product prices
+        let total_amount = 0;
+        const updatedProducts = order.products.map((product, index) => {
+            const priceUpdate = products[index];
+            const unit_price = priceUpdate?.unit_price || product.unit_price || 0;
+            const total_price = unit_price * product.quantity;
+            total_amount += total_price;
+            
+            return {
+                ...product.toObject(),
+                unit_price,
+                total_price
+            };
+        });
+
+        // Update order with new pricing
+        const updateData = {
+            products: updatedProducts,
+            currency: currency || order.currency || 'INR',
+            total_amount,
+            price_updated_at: new Date()
+        };
+
+        if (notes) {
+            updateData.admin_notes = notes;
+        }
+
+        const updatedOrder = await Order.findByIdAndUpdate(
+            req.params.id,
+            updateData,
+            { new: true }
+        ).populate("user", "email username");
+
+        // Send email notification to user about price update
+        const currencySymbols = {
+            'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ',
+            'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'
+        };
+        const symbol = currencySymbols[currency || 'INR'] || '';
+
+        const productRows = updatedProducts.map(p => `
+            <tr>
+                <td style="padding: 12px; border: 1px solid #e2e8f0;">${p.name}</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${p.quantity} ${p.unit || 'kg'}</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: right;">${symbol}${(p.unit_price || 0).toLocaleString()}</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: right; font-weight: bold;">${symbol}${(p.total_price || 0).toLocaleString()}</td>
+            </tr>
+        `).join('');
+
+        await transporter.sendMail({
+            from: `"Novel Exporters" <${process.env.EMAIL_USER}>`,
+            to: order.user.email,
+            subject: `💰 Price Update for Order #${order._id.toString().slice(-8).toUpperCase()} – Novel Exporters`,
+            attachments: getLogoAttachment(),
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                    <div style="padding: 30px;">
+                        ${getEmailHeader()}
+                        <div style="background: #dbeafe; padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0;">
+                            <h2 style="color: #1e40af; margin: 0;">💰 Price Update</h2>
+                        </div>
+                        <p>Dear ${order.user.username},</p>
+                        <p>The pricing for your order has been updated. Please review the details below:</p>
+                        
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <thead>
+                                <tr style="background: #228B22;">
+                                    <th style="padding: 12px; border: 1px solid #ddd; color: white; text-align: left;">Product</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; color: white; text-align: center;">Quantity</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; color: white; text-align: right;">Unit Price</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; color: white; text-align: right;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${productRows}
+                                <tr style="background: #f0fdf4;">
+                                    <td colspan="3" style="padding: 12px; border: 1px solid #e2e8f0; text-align: right; font-weight: bold;">Grand Total:</td>
+                                    <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: right; font-weight: bold; font-size: 16px; color: #166534;">${symbol}${total_amount.toLocaleString()} ${currency || 'INR'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        ${notes ? `<div style="background: #f1f5f9; padding: 15px; border-radius: 8px; border-left: 4px solid #228B22; margin: 20px 0;"><p style="margin: 0;"><strong>Message from Export Team:</strong></p><p style="margin: 5px 0 0 0;">${notes}</p></div>` : ""}
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="http://localhost:5173/profile" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
+                        </div>
+                        ${getEmailFooter()}
+                    </div>
+                </div>
+            `
+        });
+
+        res.json({ message: "Pricing updated successfully", order: updatedOrder });
+    } catch (err) {
+        console.error("Error updating pricing:", err);
+        res.status(500).json({ message: "Error updating pricing" });
     }
 });
 

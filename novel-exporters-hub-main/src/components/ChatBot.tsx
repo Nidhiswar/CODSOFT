@@ -87,7 +87,7 @@ const ChatBot = () => {
     };
 
     return (
-        <div className="fixed bottom-8 right-8 z-[200]">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-[200]">
             {/* Attention CTA Bubble */}
             <AnimatePresence>
                 {showAttention && !isOpen && (
@@ -95,7 +95,7 @@ const ChatBot = () => {
                         initial={{ opacity: 0, x: 20, scale: 0.8 }}
                         animate={{ opacity: 1, x: 0, scale: 1 }}
                         exit={{ opacity: 0, x: 20, scale: 0.8 }}
-                        className="absolute bottom-20 right-0 w-64 p-4 rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl border border-spice-gold/20 mb-4"
+                        className="absolute bottom-16 sm:bottom-20 right-0 w-56 sm:w-64 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl border border-spice-gold/20 mb-4"
                     >
                         <button
                             onClick={() => setShowAttention(false)}
@@ -123,10 +123,10 @@ const ChatBot = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 ${isOpen ? "bg-zinc-900 text-white rotate-90" : "bg-spice-gold text-black shadow-spice-gold/20"
+                className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 ${isOpen ? "bg-zinc-900 text-white rotate-90" : "bg-spice-gold text-black shadow-spice-gold/20"
                     }`}
             >
-                {isOpen ? <X className="w-7 h-7" /> : <MessageSquare className="w-7 h-7" />}
+                {isOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" /> : <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />}
 
                 {!isOpen && (
                     <span className="absolute top-0 right-0 w-4 h-4 bg-green-500 border-2 border-white dark:border-zinc-950 rounded-full animate-pulse" />
@@ -140,10 +140,10 @@ const ChatBot = () => {
                         initial={{ opacity: 0, y: 100, scale: 0.9, transformOrigin: "bottom right" }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 100, scale: 0.9 }}
-                        className="absolute bottom-20 right-0 w-[90vw] md:w-[400px] h-[600px] max-h-[70vh] bg-white dark:bg-zinc-950 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.3)] border border-border overflow-hidden flex flex-col"
+                        className="absolute bottom-14 sm:bottom-16 md:bottom-20 right-0 w-[calc(100vw-2rem)] sm:w-[350px] md:w-[400px] h-[60vh] sm:h-[500px] md:h-[600px] max-h-[70vh] bg-white dark:bg-zinc-950 rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.3)] border border-border overflow-hidden flex flex-col"
                     >
                         {/* Header */}
-                        <div className="p-6 bg-zinc-50 dark:bg-zinc-900/50 border-b border-border flex items-center justify-between">
+                        <div className="p-4 sm:p-5 md:p-6 bg-zinc-50 dark:bg-zinc-900/50 border-b border-border flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-spice-gold to-amber-600 flex items-center justify-center p-0.5">
                                     <div className="w-full h-full bg-white dark:bg-zinc-900 rounded-[0.9rem] flex items-center justify-center">

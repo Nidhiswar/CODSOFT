@@ -35,14 +35,14 @@ const Products = ({ user }: { user: any }) => {
   return (
     <div className="overflow-hidden relative min-h-screen bg-background text-foreground">
       {/* Hero Section */}
-      <section className="relative py-24 md:py-32 bg-zinc-950 overflow-hidden">
+      <section className="relative py-16 sm:py-20 md:py-24 lg:py-32 bg-zinc-950 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center opacity-20" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-950/50 to-zinc-950" />
         <div className="container-custom relative z-10 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-7xl font-bold font-serif text-white mb-6 tracking-tight"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold font-serif text-white mb-4 sm:mb-6 tracking-tight"
           >
             Premium Spice Selection
           </motion.h1>
@@ -50,7 +50,7 @@ const Products = ({ user }: { user: any }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-xl md:text-2xl text-white/70 max-w-3xl mx-auto font-light leading-relaxed"
+            className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/70 max-w-3xl mx-auto font-light leading-relaxed px-4"
           >
             Directly from the lush plantations of <span className="text-spice-gold font-medium">Tamil Nadu</span> & <span className="text-spice-gold font-medium">Kerala</span> to your global doorstep.
           </motion.p>
@@ -61,13 +61,13 @@ const Products = ({ user }: { user: any }) => {
       <section className="section-padding bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500">
         <div className="container-custom">
           {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-3 mb-16">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-12 md:mb-16">
             {categories.map((category) => (
               <Button
                 key={category}
                 variant={activeCategory === category ? "default" : "outline"}
                 onClick={() => setActiveCategory(category)}
-                className={`rounded-full px-8 py-6 text-sm font-bold uppercase tracking-widest transition-all duration-300 ${activeCategory === category
+                className={`rounded-full px-4 py-2 sm:px-6 sm:py-4 md:px-8 md:py-6 text-xs sm:text-sm font-bold uppercase tracking-wider sm:tracking-widest transition-all duration-300 ${activeCategory === category
                   ? "bg-spice-gold text-black shadow-xl shadow-spice-gold/20 scale-105"
                   : "bg-white/5 border-zinc-200 dark:border-white/10 hover:border-spice-gold"
                   }`}
@@ -78,7 +78,7 @@ const Products = ({ user }: { user: any }) => {
           </div>
 
           {/* Products Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             {filteredProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
@@ -91,8 +91,8 @@ const Products = ({ user }: { user: any }) => {
 
           {/* Empty State */}
           {filteredProducts.length === 0 && (
-            <div className="text-center py-24">
-              <p className="text-zinc-500 text-lg">No authentic spices found in the {activeCategory} category.</p>
+            <div className="text-center py-12 sm:py-16 md:py-24">
+              <p className="text-zinc-500 text-base sm:text-lg">No authentic spices found in the {activeCategory} category.</p>
             </div>
           )}
         </div>
@@ -113,7 +113,7 @@ const Products = ({ user }: { user: any }) => {
             />
 
             {/* Expanded Card */}
-            <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 md:p-8 pointer-events-none">
+            <div className="fixed inset-0 z-[101] flex items-center justify-center p-2 sm:p-4 md:p-8 pointer-events-none">
               <motion.div
                 layoutId={`card-container-${selectedProduct.id}`}
                 initial={{ opacity: 0, scale: 0.8, y: 40 }}
@@ -126,10 +126,10 @@ const Products = ({ user }: { user: any }) => {
                   mass: 0.8,
                   opacity: { duration: 0.15 }
                 }}
-                className="w-full max-w-6xl h-full max-h-[85vh] bg-white dark:bg-zinc-900 overflow-hidden rounded-[2.5rem] shadow-[0_0_120px_rgba(196,160,82,0.15)] border border-spice-gold/20 pointer-events-auto flex flex-col md:flex-row"
+                className="w-full max-w-6xl h-full max-h-[90vh] sm:max-h-[85vh] bg-white dark:bg-zinc-900 overflow-hidden rounded-xl sm:rounded-2xl md:rounded-[2.5rem] shadow-[0_0_120px_rgba(196,160,82,0.15)] border border-spice-gold/20 pointer-events-auto flex flex-col md:flex-row"
               >
                 {/* Image Section */}
-                <div className="md:w-1/2 h-1/2 md:h-full relative overflow-hidden bg-black flex shrink-0">
+                <div className="md:w-1/2 h-2/5 sm:h-1/2 md:h-full relative overflow-hidden bg-black flex shrink-0">
                   <motion.img
                     layoutId={`product-image-${selectedProduct.id}`}
                     src={selectedProduct.image}
@@ -141,7 +141,7 @@ const Products = ({ user }: { user: any }) => {
                   {/* Category Tag Animation */}
                   <motion.div
                     layoutId={`badge-${selectedProduct.id}`}
-                    className="absolute top-8 left-8 px-6 py-2 rounded-full bg-spice-gold text-black text-xs font-black uppercase tracking-[0.3em] shadow-2xl"
+                    className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-8 px-3 py-1.5 sm:px-4 sm:py-2 md:px-6 md:py-2 rounded-full bg-spice-gold text-black text-[10px] sm:text-xs font-black uppercase tracking-widest sm:tracking-[0.3em] shadow-2xl"
                   >
                     {selectedProduct.category}
                   </motion.div>
@@ -149,22 +149,22 @@ const Products = ({ user }: { user: any }) => {
 
                 {/* Details Section */}
                 <motion.div 
-                  className="md:w-1/2 h-1/2 md:h-full overflow-y-auto p-8 md:p-12 bg-white/5 backdrop-blur-3xl relative"
+                  className="md:w-1/2 h-3/5 sm:h-1/2 md:h-full overflow-y-auto p-4 sm:p-6 md:p-8 lg:p-12 bg-white/5 backdrop-blur-3xl relative"
                   initial={{ opacity: 0, x: 30 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1, duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <div className="flex justify-between items-start mb-8">
+                  <div className="flex justify-between items-start mb-4 sm:mb-6 md:mb-8">
                     <div className="space-y-1">
                       <motion.h2
                         layoutId={`product-title-${selectedProduct.id}`}
-                        className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight"
+                        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-serif text-foreground leading-tight"
                       >
                         {selectedProduct.name}
                       </motion.h2>
                       <motion.p
                         layoutId={`product-tamil-${selectedProduct.id}`}
-                        className="text-xl font-medium text-primary italic"
+                        className="text-base sm:text-lg md:text-xl font-medium text-primary italic"
                       >
                         {selectedProduct.tamilName}
                       </motion.p>
@@ -256,23 +256,6 @@ const Products = ({ user }: { user: any }) => {
                         'Add to Cart'
                       )}
                     </Button>
-                  </div>
-
-                  {/* Special Instructions */}
-                  <div className="mt-4">
-                    <textarea
-                      className="w-full p-4 rounded-lg border border-zinc-200 dark:border-white/10 bg-white/5 text-sm text-foreground"
-                      placeholder="Add special instructions for this order..."
-                    ></textarea>
-                  </div>
-
-                  {/* Delivery Date Picker */}
-                  <div className="mt-4">
-                    <label className="block text-sm font-bold mb-2">Preferred Delivery Date:</label>
-                    <input
-                      type="date"
-                      className="w-full p-4 rounded-lg border border-zinc-200 dark:border-white/10 bg-white/5 text-sm text-foreground"
-                    />
                   </div>
 
                   <motion.div 

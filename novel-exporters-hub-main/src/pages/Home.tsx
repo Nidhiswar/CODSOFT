@@ -14,16 +14,23 @@ const Home = () => {
     <div className="overflow-hidden">
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center bg-zinc-950 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center opacity-15" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent" />
+        <div 
+          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center"
+          style={{ 
+            opacity: 0.35,
+            filter: 'brightness(1.1) contrast(1.15) saturate(1.1)'
+          }} 
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
 
-        <div className="container-custom relative z-10 py-20">
-          <div className="max-w-2xl space-y-6 animate-fade-in">
-            <span className="inline-block px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-500 text-zinc-900 text-sm font-black shadow-2xl shadow-amber-500/30 border-2 border-amber-300/50 backdrop-blur-sm hover:scale-105 transition-transform duration-300 uppercase tracking-widest">
+        <div className="container-custom relative z-10 py-12 sm:py-16 md:py-20">
+          <div className="max-w-2xl space-y-4 sm:space-y-6 animate-fade-in">
+            <span className="inline-block px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-500 text-zinc-900 text-xs sm:text-sm font-black shadow-2xl shadow-amber-500/30 border-2 border-amber-300/50 backdrop-blur-sm hover:scale-105 transition-transform duration-300 uppercase tracking-wider sm:tracking-widest">
               Premium Quality Spices from Tamil Nadu and Kerala
             </span>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-serif text-white leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold font-serif text-white leading-tight">
               Bringing Nature's
               <span className="block bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]">
                 Finest Flavors
@@ -51,15 +58,12 @@ const Home = () => {
             </div>
           </div>
         </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
       </section>
 
       {/* Features Section */}
       <section className="section-padding bg-background">
         <div className="container-custom">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             {[
               { icon: Leaf, title: "100% Natural", desc: "Pure & organic spices" },
               { icon: Globe, title: "Global Export", desc: "Worldwide shipping" },
@@ -68,11 +72,11 @@ const Home = () => {
             ].map((feature, index) => (
               <div
                 key={index}
-                className="text-center p-6 rounded-2xl bg-card shadow-sm hover:shadow-lg transition-all duration-300 card-hover animate-fade-in"
+                className="text-center p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-card shadow-sm hover:shadow-lg transition-all duration-300 card-hover animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="w-14 h-14 mx-auto mb-4 rounded-xl gradient-leaf flex items-center justify-center">
-                  <feature.icon className="w-7 h-7 text-white" />
+                <div className="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-3 sm:mb-4 rounded-lg sm:rounded-xl gradient-leaf flex items-center justify-center">
+                  <feature.icon className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                 </div>
                 <h3 className="font-semibold font-serif text-foreground mb-1">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground">{feature.desc}</p>
