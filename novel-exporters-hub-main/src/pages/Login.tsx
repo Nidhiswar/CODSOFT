@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, Phone } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, Phone, ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import novelLogo from "@/assets/novel-logo-dynamic.png";
@@ -88,6 +88,15 @@ const Login = ({ onLogin }: LoginProps) => {
 
       {/* Form Container */}
       <div className="relative z-10 w-full max-w-md">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-6 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all duration-300 group shadow-lg"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-semibold">Back</span>
+        </button>
+
         <div className="p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl">
           {/* Logo/Brand */}
           <div className="text-center mb-6 sm:mb-8 md:mb-10">

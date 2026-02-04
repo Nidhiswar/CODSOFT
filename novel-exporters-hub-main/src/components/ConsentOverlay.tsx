@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShieldCheck, FileText, Lock, ChevronRight, X, Download } from "lucide-react";
+import { ShieldCheck, FileText, Lock, ChevronRight, X, Download, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import novelLogo from "@/assets/novel-logo-dynamic.png";
 
 interface ConsentOverlayProps {
     onAccept: () => void;
@@ -23,8 +24,9 @@ const ConsentOverlay = ({ onAccept, onDecline }: ConsentOverlayProps) => {
             >
                 {/* Left Side: Branding & Trust */}
                 <div className="md:w-1/3 bg-zinc-50 dark:bg-zinc-800/50 p-8 md:p-12 flex flex-col justify-center border-r border-zinc-100 dark:border-white/5">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
-                        <ShieldCheck className="w-10 h-10 text-primary" />
+                    {/* Company Logo */}
+                    <div className="w-20 h-20 rounded-2xl bg-white dark:bg-zinc-800 flex items-center justify-center mb-6 shadow-lg border border-zinc-100 dark:border-white/10 overflow-hidden">
+                        <img src={novelLogo} alt="Novel Exporters Logo" className="w-16 h-16 object-contain" />
                     </div>
                     <h2 className="text-3xl font-bold font-serif mb-4 text-foreground">Welcome to Novel Exporters</h2>
                     <p className="text-sm text-muted-foreground leading-relaxed mb-8">
@@ -39,6 +41,17 @@ const ConsentOverlay = ({ onAccept, onDecline }: ConsentOverlayProps) => {
                             <FileText className="w-4 h-4 text-spice-gold" />
                             Global Compliance
                         </div>
+                    </div>
+                    
+                    {/* Back to Home Link */}
+                    <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-white/10">
+                        <a 
+                            href="/" 
+                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
+                        >
+                            <Home className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            <span>Back to Home Page</span>
+                        </a>
                     </div>
                 </div>
 

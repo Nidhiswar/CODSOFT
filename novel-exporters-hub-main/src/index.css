@@ -25,6 +25,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
+}
+
 @layer base {
   :root {
     /* Warm Spice Theme */

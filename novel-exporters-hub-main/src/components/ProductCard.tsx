@@ -1,23 +1,46 @@
 import { Product } from "@/data/products";
-import { ExternalLink, ShoppingCart, Check } from "lucide-react";
+import { ExternalLink, ShoppingCart, Check, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/hooks/useCart";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
   product: Product;
   index?: number;
   onClick?: (product: Product) => void;
   className?: string;
+  user?: any;
 }
 
-const ProductCard = ({ product, index = 0, onClick, className }: ProductCardProps) => {
-  const { addToCart } = useCart();
+const ProductCard = ({ product, index = 0, onClick, className, user }: ProductCardProps) => {
+  const { addToCart, cart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
+  const navigate = useNavigate();
+  
+  const isInCart = cart.some(item => item.id === product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent opening modal
+    
+    // Check if user is logged in
+    if (!user) {
+      toast.error("Login to order products", {
+        action: {
+          label: "Login",
+          onClick: () => navigate("/login")
+        }
+      });
+      return;
+    }
+    
+    // Check if already in cart
+    if (isInCart) {
+      toast.info("Already in cart! View your cart to update quantity.");
+      return;
+    }
+    
     addToCart(product);
     setIsAdded(true);
     toast.success(`Added ${product.name} to cart`);
@@ -72,10 +95,21 @@ const ProductCard = ({ product, index = 0, onClick, className }: ProductCardProp
         {/* Floating Add to Cart Button */}
         <button
           onClick={handleAddToCart}
-          className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-spice-gold text-black flex items-center justify-center shadow-2xl transition-all duration-150 hover:scale-110 hover:rotate-3 active:scale-90 group/cart overflow-hidden"
+          className={`absolute bottom-3 right-3 sm:bottom-4 sm:right-4 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-2xl transition-all duration-150 hover:scale-110 hover:rotate-3 active:scale-90 group/cart overflow-hidden ${!user ? 'bg-zinc-600 text-white' : isInCart ? 'bg-green-500 text-white' : 'bg-spice-gold text-black'}`}
+          title={!user ? "Login to order" : isInCart ? "Already in cart" : "Add to cart"}
         >
           <AnimatePresence mode="wait">
-            {isAdded ? (
+            {!user ? (
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 20 }}
+              >
+                <LogIn className="w-5 h-5" />
+              </motion.div>
+            ) : isInCart || isAdded ? (
               <motion.div
                 key="check"
                 initial={{ opacity: 0, scale: 0, rotate: -180 }}

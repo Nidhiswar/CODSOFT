@@ -37,6 +37,24 @@ export const api = {
         return res.json();
     },
 
+    updateProfile: async (profileData: { username?: string; phone?: string; profilePicture?: string }) => {
+        const res = await fetch(`${API_BASE_URL}/auth/profile`, {
+            method: "PUT",
+            headers: getHeaders(),
+            body: JSON.stringify(profileData),
+        });
+        return res.json();
+    },
+
+    modifyOrder: async (orderId: string, products: any[]) => {
+        const res = await fetch(`${API_BASE_URL}/orders/my-orders/${orderId}/modify`, {
+            method: "PUT",
+            headers: getHeaders(),
+            body: JSON.stringify({ products }),
+        });
+        return res.json();
+    },
+
     recordConsent: async (consentData: any) => {
         const res = await fetch(`${API_BASE_URL}/auth/consent`, {
             method: "POST",
@@ -124,11 +142,11 @@ export const api = {
         return res.json();
     },
 
-    updateOrderPricing: async (orderId: string, products: any[], currency: string, notes?: string) => {
+    updateOrderPricing: async (orderId: string, products: any[], currency: string, notes?: string, shippingCharges?: number) => {
         const res = await fetch(`${API_BASE_URL}/orders/${orderId}/pricing`, {
             method: "PUT",
             headers: getHeaders(),
-            body: JSON.stringify({ products, currency, notes }),
+            body: JSON.stringify({ products, currency, notes, shippingCharges }),
         });
         return res.json();
     },

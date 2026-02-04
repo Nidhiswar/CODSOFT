@@ -88,14 +88,14 @@ const ChatBot = () => {
 
     return (
         <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-[200]">
-            {/* Attention CTA Bubble */}
+            {/* Attention CTA Bubble - Adjacent to chat button */}
             <AnimatePresence>
                 {showAttention && !isOpen && (
                     <motion.div
                         initial={{ opacity: 0, x: 20, scale: 0.8 }}
                         animate={{ opacity: 1, x: 0, scale: 1 }}
                         exit={{ opacity: 0, x: 20, scale: 0.8 }}
-                        className="absolute bottom-16 sm:bottom-20 right-0 w-56 sm:w-64 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl border border-spice-gold/20 mb-4"
+                        className="absolute bottom-0 right-16 sm:right-18 md:right-20 w-56 sm:w-64 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl border border-spice-gold/20 mr-2"
                     >
                         <button
                             onClick={() => setShowAttention(false)}
@@ -104,8 +104,8 @@ const ChatBot = () => {
                             <X className="w-3 h-3" />
                         </button>
                         <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-spice-gold/10 flex items-center justify-center shrink-0">
-                                <img src={novelLogo} alt="Novel Exporters" className="w-5 h-5 object-contain" />
+                            <div className="w-10 h-10 rounded-lg bg-spice-gold/10 flex items-center justify-center shrink-0">
+                                <img src={novelLogo} alt="Novel Exporters" className="w-7 h-7 object-contain" />
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-foreground">Aromatic Specialist</p>

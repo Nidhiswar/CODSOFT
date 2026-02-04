@@ -1,40 +1,55 @@
 import { motion } from "framer-motion";
-import { ShieldCheck, Building2, FileCheck, Globe, Award, Leaf, Ship } from "lucide-react";
+import { ShieldCheck, Building2, UtensilsCrossed, Globe, Award, Leaf, Ship } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-const certifications = [
+interface Certification {
+    title: string;
+    icon: LucideIcon;
+    color: string;
+    description: string;
+}
+
+const certifications: Certification[] = [
     {
         title: "GST Registered",
         icon: ShieldCheck,
+        color: "text-emerald-600",
         description: "Goods and Services Tax compliant for transparent and verified business operations.",
     },
     {
         title: "MSME Certified",
         icon: Building2,
+        color: "text-blue-600",
         description: "Registered under Ministry of Micro, Small & Medium Enterprises, supporting industrial growth.",
     },
     {
         title: "FSSAI Licensed",
-        icon: FileCheck,
+        icon: UtensilsCrossed,
+        color: "text-green-600",
         description: "Food Safety and Standards Authority of India certified for superior food quality control.",
     },
     {
         title: "IEC Authorized",
         icon: Globe,
+        color: "text-indigo-600",
         description: "Import Export Code authorized by DGFT for seamless international trade operations.",
     },
     {
         title: "Spices Board Registered",
         icon: Award,
+        color: "text-amber-600",
         description: "Mandatory registration with the Spices Board of India ensuring authentic spice exports.",
     },
     {
         title: "APEDA Registered",
         icon: Leaf,
+        color: "text-lime-600",
         description: "Registered with APEDA for the promotion and development of export of scheduled products.",
     },
     {
         title: "ICEGATE Enabled",
         icon: Ship,
+        color: "text-cyan-600",
         description: "Direct EDI access to Indian Customs for efficient cargo clearance across Sea & Air.",
     },
 ];
@@ -83,8 +98,8 @@ const Certifications = () => {
 
                             {/* Icon Container */}
                             <div className="mb-8 relative">
-                                <div className="p-6 rounded-3xl bg-muted/30 group-hover:bg-primary group-hover:rotate-[6deg] transition-all duration-500 shadow-sm">
-                                    <item.icon className="w-10 h-10 text-muted-foreground group-hover:text-white transition-colors duration-500" />
+                                <div className={`p-5 rounded-3xl bg-white dark:bg-zinc-800 group-hover:scale-110 transition-all duration-500 shadow-md border border-border/30`}>
+                                    <item.icon className={`w-12 h-12 ${item.color} group-hover:scale-110 transition-transform duration-300`} strokeWidth={1.5} />
                                 </div>
                             </div>
 

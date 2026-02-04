@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, ShoppingCart, Trash2, ArrowRight } from "lucide-react";
+import { Menu, X, User, LogOut, ShoppingCart, Trash2, ArrowRight, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import novelLogo from "@/assets/novel-logo-dynamic.png";
@@ -37,7 +37,7 @@ interface HeaderProps {
 }
 
 const Header = ({ user, onLogout }: HeaderProps) => {
-  const { cart, totalItems, removeFromCart } = useCart();
+  const { cart, totalItems, removeFromCart, updateQuantity, updateUnit } = useCart();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -201,9 +201,31 @@ const Header = ({ user, onLogout }: HeaderProps) => {
                               />
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
-                                <p className="text-xs text-zinc-500">
-                                  {item.quantity} {item.unit}
-                                </p>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <button
+                                    onClick={() => updateQuantity(item.id, Math.max(0.1, item.quantity - 1))}
+                                    className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <span className="text-xs font-bold min-w-[28px] text-center">
+                                    {item.quantity}
+                                  </span>
+                                  <button
+                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                    className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                  <select
+                                    value={item.unit || 'kg'}
+                                    onChange={(e) => updateUnit(item.id, e.target.value as 'kg' | 'g')}
+                                    className="h-6 px-1.5 text-[10px] font-bold bg-spice-gold text-black border-0 rounded-md cursor-pointer shadow-sm hover:bg-spice-gold/90 transition-colors"
+                                  >
+                                    <option value="kg">kg</option>
+                                    <option value="g">g</option>
+                                  </select>
+                                </div>
                               </div>
                               <button
                                 onClick={() => removeFromCart(item.id)}

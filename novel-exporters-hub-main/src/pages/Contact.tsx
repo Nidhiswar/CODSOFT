@@ -38,33 +38,46 @@ const Contact = () => {
               </div>
 
               <div className="space-y-4 sm:space-y-6">
-                <div className="flex items-start gap-3 sm:gap-4 p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-card border border-border card-hover animate-fade-in">
+                <a 
+                  href="mailto:novelexporters@gmail.com"
+                  className="flex items-start gap-3 sm:gap-4 p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-card border border-border card-hover animate-fade-in cursor-pointer hover:border-primary/50 transition-all"
+                >
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl gradient-leaf flex items-center justify-center flex-shrink-0">
                     <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <div>
                     <h3 className="font-semibold font-serif text-foreground mb-1 text-sm sm:text-base">Email</h3>
                     <p className="text-muted-foreground text-xs sm:text-sm">International Support</p>
-                    <a href="mailto:novelexporters@gmail.com" className="text-primary hover:underline text-sm sm:text-base break-all">
+                    <span className="text-primary hover:underline text-sm sm:text-base break-all">
                       novelexporters@gmail.com
-                    </a>
+                    </span>
                   </div>
-                </div>
+                </a>
 
-                <div className="flex items-start gap-3 sm:gap-4 p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-card border border-border card-hover animate-fade-in" style={{ animationDelay: '100ms' }}>
+                <a 
+                  href="tel:+918012804316"
+                  className="flex items-start gap-3 sm:gap-4 p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-card border border-border card-hover animate-fade-in cursor-pointer hover:border-primary/50 transition-all"
+                  style={{ animationDelay: '100ms' }}
+                >
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl gradient-warm flex items-center justify-center flex-shrink-0">
                     <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <div>
                     <h3 className="font-semibold font-serif text-foreground mb-1 text-sm sm:text-base">Phone</h3>
                     <p className="text-muted-foreground text-xs sm:text-sm">Available Mon-Sat, 9AM-6PM IST</p>
-                    <a href="tel:+918012804316" className="text-primary hover:underline">
+                    <span className="text-primary hover:underline">
                       +91 80128 04316
-                    </a>
+                    </span>
                   </div>
-                </div>
+                </a>
 
-                <div className="flex items-start gap-4 p-6 rounded-2xl bg-card border border-border card-hover animate-fade-in" style={{ animationDelay: '200ms' }}>
+                <a 
+                  href="https://www.google.com/maps/search/?api=1&query=Novel%20Exporters%2C%202%2F202-C%2C%20Dhanam%20Nagar%2C%20Mylampatti%2C%20Coimbatore%20641062&zoom=17"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-4 p-6 rounded-2xl bg-card border border-border card-hover animate-fade-in cursor-pointer hover:border-primary/50 transition-all"
+                  style={{ animationDelay: '200ms' }}
+                >
                   <div className="w-12 h-12 rounded-xl gradient-warm flex items-center justify-center flex-shrink-0">
                     <MapPin className="w-6 h-6 text-white" />
                   </div>
@@ -72,16 +85,11 @@ const Contact = () => {
                     <h3 className="font-semibold font-serif text-foreground mb-1">Location</h3>
                     <p className="text-muted-foreground text-sm">Visit our office</p>
                     <p className="text-foreground">Novel Exporters, 2/202-C, Dhanam Nagar, Mylampatti, Coimbatore - 641062</p>
-                    <a
-                      href="https://www.google.com/maps/search/?api=1&query=Novel%20Exporters%2C%202%2F202-C%2C%20Dhanam%20Nagar%2C%20Mylampatti%2C%20Coimbatore%20641062&zoom=17"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline text-sm mt-1 inline-block"
-                    >
+                    <span className="text-primary hover:underline text-sm mt-1 inline-block">
                       Open in Google Maps
-                    </a>
+                    </span>
                   </div>
-                </div>
+                </a>
 
                 <div className="flex items-start gap-4 p-6 rounded-2xl bg-card border border-border card-hover animate-fade-in" style={{ animationDelay: '300ms' }}>
                   <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
@@ -95,11 +103,13 @@ const Contact = () => {
                 </div>
               </div>
 
-              <Link to="/enquiry">
-                <Button variant="hero" size="lg" className="w-full sm:w-auto">
-                  Send an Enquiry
-                </Button>
-              </Link>
+              <div className="mt-8 pt-6">
+                <Link to="/enquiry">
+                  <Button variant="hero" size="lg" className="w-full sm:w-auto">
+                    Send an Enquiry
+                  </Button>
+                </Link>
+              </div>
             </div>
 
             {/* Map / Image */}

@@ -14,7 +14,8 @@ const OrderSchema = new mongoose.Schema({
         }
     ],
     currency: { type: String, default: "INR" },
-    total_amount: Number, // Sum of all product total_prices
+    shipping_charges: { type: Number, default: 0 }, // Shipping charges set by admin
+    total_amount: Number, // Sum of all product total_prices + shipping_charges
     status: { type: String, enum: ["pending", "quoted", "confirmed", "shipped", "approved", "rejected"], default: "pending" },
     delivery_request: String,
     requested_delivery_date: Date,

@@ -6,6 +6,7 @@ const UserSchema = new mongoose.Schema({
     phone: { type: String, required: false },
     password: { type: String, required: true },
     role: { type: String, enum: ["user", "admin"], default: "user" },
+    profilePicture: { type: String, default: null }, // Base64 or URL for profile image
     resetPasswordToken: String,
     resetPasswordExpires: Date,
     cart: { type: Array, default: [] },

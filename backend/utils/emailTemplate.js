@@ -30,7 +30,7 @@ const getEmailFooter = () => {
             <p style="font-size: 12px; color: #64748b; margin: 0;">
                 <strong>Novel Exporters</strong><br>
                 Premium Indian Spices | Global Export Excellence<br>
-                📧 novelexporters@gmail.com | 📞 +91 80128 04316
+                Email: novelexporters@gmail.com | Phone: +91 80128 04316
             </p>
             <p style="font-size: 10px; color: #94a3b8; margin: 10px 0 0 0;">
                 &copy; ${new Date().getFullYear()} Novel Exporters. All rights reserved.

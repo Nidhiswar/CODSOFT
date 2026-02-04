@@ -44,7 +44,7 @@ router.post("/", auth, async (req, res) => {
         await transporter.sendMail({
             from: `"Order Desk" <${process.env.EMAIL_USER}>`,
             to: ADMIN_EMAIL,
-            subject: `🔥 NEW QUOTATION REQUEST: ${user.username}`,
+            subject: `NEW QUOTATION REQUEST: ${user.username}`,
             attachments: getLogoAttachment(),
             html: `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
@@ -82,7 +82,7 @@ router.post("/", auth, async (req, res) => {
         await transporter.sendMail({
             from: `"Novel Exporters" <${process.env.EMAIL_USER}>`,
             to: user.email,
-            subject: "📝 Quotation Request Received – Novel Exporters",
+            subject: "Quotation Request Received – Novel Exporters",
             attachments: getLogoAttachment(),
             html: `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
@@ -274,30 +274,77 @@ router.get('/my-orders/pdf', auth, async (req, res) => {
             
             yPos += 15;
             
-            // Products Table Header
+            // Products Table Header - with pricing columns if order has pricing
+            const hasPricing = order.total_amount > 0;
+            
             doc.rect(50, yPos, doc.page.width - 100, 25)
                .fillColor('#0c4a6e').fill();
-            doc.fontSize(10).fillColor('#fff').font('Helvetica-Bold')
-               .text('Product Name', 60, yPos + 8)
-               .text('Quantity', 350, yPos + 8)
-               .text('Unit', 450, yPos + 8);
+            
+            if (hasPricing) {
+                doc.fontSize(10).fillColor('#fff').font('Helvetica-Bold')
+                   .text('Product Name', 60, yPos + 8)
+                   .text('Qty', 280, yPos + 8)
+                   .text('Unit Price', 340, yPos + 8)
+                   .text('Total', 450, yPos + 8);
+            } else {
+                doc.fontSize(10).fillColor('#fff').font('Helvetica-Bold')
+                   .text('Product Name', 60, yPos + 8)
+                   .text('Quantity', 350, yPos + 8)
+                   .text('Unit', 450, yPos + 8);
+            }
             
             yPos += 25;
+            
+            // Currency symbol
+            const currencySymbols = { 'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ' };
+            const symbol = currencySymbols[order.currency || 'INR'] || '₹';
             
             // Products Table Rows
             order.products.forEach((p, pIdx) => {
                 const bgColor = pIdx % 2 === 0 ? '#f8fafc' : '#fff';
                 doc.rect(50, yPos, doc.page.width - 100, 22)
                    .fillColor(bgColor).fill();
-                doc.fontSize(10).fillColor('#334155').font('Helvetica')
-                   .text(p.name, 60, yPos + 6)
-                   .text(p.quantity.toString(), 350, yPos + 6)
-                   .text(p.unit || 'kg', 450, yPos + 6);
+                
+                if (hasPricing) {
+                    doc.fontSize(10).fillColor('#334155').font('Helvetica')
+                       .text(p.name, 60, yPos + 6)
+                       .text(`${p.quantity} ${p.unit || 'kg'}`, 280, yPos + 6)
+                       .text(`${symbol}${(p.unit_price || 0).toLocaleString()}`, 340, yPos + 6)
+                       .text(`${symbol}${(p.total_price || 0).toLocaleString()}`, 450, yPos + 6);
+                } else {
+                    doc.fontSize(10).fillColor('#334155').font('Helvetica')
+                       .text(p.name, 60, yPos + 6)
+                       .text(p.quantity.toString(), 350, yPos + 6)
+                       .text(p.unit || 'kg', 450, yPos + 6);
+                }
                 yPos += 22;
             });
             
+            // Shipping Charges Row (if applicable)
+            if (hasPricing && order.shipping_charges > 0) {
+                doc.rect(50, yPos, doc.page.width - 100, 22)
+                   .fillColor('#fef3c7').fill();
+                doc.fontSize(10).fillColor('#92400e').font('Helvetica-Bold')
+                   .text('Shipping Charges', 60, yPos + 6)
+                   .text(`${symbol}${order.shipping_charges.toLocaleString()}`, 450, yPos + 6);
+                yPos += 22;
+            }
+            
+            // Grand Total Row (if pricing exists)
+            if (hasPricing) {
+                doc.rect(50, yPos, doc.page.width - 100, 28)
+                   .fillColor('#dcfce7').fill();
+                doc.fontSize(12).fillColor('#166534').font('Helvetica-Bold')
+                   .text('Grand Total:', 60, yPos + 8)
+                   .text(`${symbol}${(order.total_amount || 0).toLocaleString()} ${order.currency || 'INR'}`, 400, yPos + 8);
+                yPos += 28;
+            }
+            
             // Table border
-            doc.rect(50, yPos - (order.products.length * 22) - 25, doc.page.width - 100, (order.products.length * 22) + 25)
+            const tableHeight = hasPricing 
+                ? (order.products.length * 22) + 25 + (order.shipping_charges > 0 ? 22 : 0) + 28
+                : (order.products.length * 22) + 25;
+            doc.rect(50, yPos - tableHeight, doc.page.width - 100, tableHeight)
                .strokeColor('#e2e8f0').lineWidth(1).stroke();
             
             yPos += 20;
@@ -334,6 +381,107 @@ router.get("/my-orders", auth, async (req, res) => {
     }
 });
 
+// Modify Order Products (User can only modify pending orders)
+router.put("/my-orders/:id/modify", auth, async (req, res) => {
+    const { products } = req.body;
+    try {
+        const order = await Order.findOne({ _id: req.params.id, user: req.user.id });
+        
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+        
+        // Only allow modification of pending orders
+        if (order.status !== "pending") {
+            return res.status(400).json({ message: "Can only modify pending orders. Please contact support for confirmed orders." });
+        }
+        
+        // Validate products - must have at least one product
+        if (!products || products.length === 0) {
+            return res.status(400).json({ message: "Order must have at least one product" });
+        }
+        
+        const user = await User.findById(req.user.id);
+        
+        // Update order products
+        order.products = products;
+        await order.save();
+        
+        // Notify admin about the modification
+        await transporter.sendMail({
+            from: `"Order Update" <${process.env.EMAIL_USER}>`,
+            to: ADMIN_EMAIL,
+            subject: `ORDER MODIFIED: ${user.username} - #${order._id.toString().slice(-8).toUpperCase()}`,
+            attachments: getLogoAttachment(),
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                    <div style="padding: 30px;">
+                        ${getEmailHeader()}
+                        <h2 style="color: #d97706; margin-top: 0;">Order Modified</h2>
+                        <p><b>Customer:</b> ${user.username} (${user.email})</p>
+                        <p><b>Order ID:</b> #${order._id.toString().slice(-8).toUpperCase()}</p>
+                        <p><b>Modified At:</b> ${new Date().toLocaleString()}</p>
+                        <h4>Updated Products:</h4>
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <thead>
+                                <tr style="background: #228B22;">
+                                    <th style="padding: 12px; border: 1px solid #ddd; color: white;">Product</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; color: white;">Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${products.map(p => `
+                                    <tr>
+                                        <td style="padding: 10px; border: 1px solid #ddd;">${p.name}</td>
+                                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${p.quantity} ${p.unit || 'kg'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        ${getEmailFooter()}
+                    </div>
+                </div>
+            `
+        });
+        
+        // Notify user about the modification
+        await transporter.sendMail({
+            from: `"Novel Exporters" <${process.env.EMAIL_USER}>`,
+            to: user.email,
+            subject: `Order Modified Successfully – #${order._id.toString().slice(-8).toUpperCase()}`,
+            attachments: getLogoAttachment(),
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                    <div style="padding: 30px;">
+                        ${getEmailHeader()}
+                        <h3 style="color: #0f172a; margin-top: 0;">Hello ${user.username},</h3>
+                        <p>Your order <strong>#${order._id.toString().slice(-8).toUpperCase()}</strong> has been successfully modified.</p>
+                        
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #228B22;">
+                            <h4 style="margin-top: 0; color: #475569;">Updated Items:</h4>
+                            <ul style="padding-left: 20px; margin: 10px 0;">
+                                ${products.map(p => `<li>${p.name} - ${p.quantity} ${p.unit || 'kg'}</li>`).join('')}
+                            </ul>
+                        </div>
+
+                        <p>Our team will update the quotation based on your changes.</p>
+                        ${getEmailFooter()}
+                    </div>
+                </div>
+            `
+        });
+        
+        res.json({ 
+            success: true, 
+            message: "Order modified successfully! You will receive an updated quotation soon.",
+            order 
+        });
+    } catch (err) {
+        console.error("❌ Error modifying order:", err);
+        res.status(500).json({ message: "Failed to modify order" });
+    }
+});
+
 // ADMIN: Get All Orders
 router.get("/all", auth, admin, async (req, res) => {
     try {
@@ -365,34 +513,34 @@ router.put("/:id/status", auth, admin, async (req, res) => {
         // Status-specific email configuration
         const statusConfig = {
             pending: {
-                subject: `📦 Order Status: PENDING – Novel Exporters`,
+                subject: `Order Status: PENDING – Novel Exporters`,
                 bgColor: '#fef9c3',
                 textColor: '#854d0e',
-                icon: '⏳'
+                icon: ''
             },
             approved: {
-                subject: `✅ Order Approved – Novel Exporters`,
+                subject: `Order Approved – Novel Exporters`,
                 bgColor: '#dbeafe',
                 textColor: '#1e40af',
-                icon: '👍'
+                icon: ''
             },
             rejected: {
-                subject: `❌ Order Declined – Novel Exporters`,
+                subject: `Order Declined – Novel Exporters`,
                 bgColor: '#fee2e2',
                 textColor: '#991b1b',
-                icon: '❌'
+                icon: ''
             },
             confirmed: {
-                subject: `🎉 Order Confirmed – Novel Exporters`,
+                subject: `Order Confirmed – Novel Exporters`,
                 bgColor: '#dcfce7',
                 textColor: '#166534',
-                icon: '🎉'
+                icon: ''
             },
             quoted: {
-                subject: `📋 Quotation Ready – Novel Exporters`,
+                subject: `Quotation Ready – Novel Exporters`,
                 bgColor: '#dbeafe',
                 textColor: '#1e40af',
-                icon: '📋'
+                icon: ''
             }
         };
 
@@ -412,7 +560,7 @@ router.put("/:id/status", auth, admin, async (req, res) => {
                         ${admin_notes ? `<div style="background: #f1f5f9; padding: 15px; border-radius: 8px; border-left: 4px solid #228B22;"><p style="margin: 0;"><strong>Message from Export Desk:</strong></p><p style="margin: 5px 0 0 0;">${admin_notes}</p></div>` : ""}
                         <p style="margin-top: 25px;">Please login to your account to review the full details and next steps.</p>
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="http://localhost:5173/profile" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
+                            <a href="http://localhost:5173/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
                         </div>
                         ${getEmailFooter()}
                     </div>
@@ -426,7 +574,7 @@ router.put("/:id/status", auth, admin, async (req, res) => {
                     <div style="padding: 30px;">
                         ${getEmailHeader()}
                         <div style="background: #dcfce7; padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0;">
-                            <h2 style="color: #166534; margin: 0;">🎉 Your Order is Confirmed!</h2>
+                            <h2 style="color: #166534; margin: 0;">Your Order is Confirmed!</h2>
                         </div>
                         <p>Dear ${order.user.username},</p>
                         <p>We are pleased to inform you that your order has been <strong>confirmed</strong> and is now being processed for delivery.</p>
@@ -444,7 +592,7 @@ router.put("/:id/status", auth, admin, async (req, res) => {
                         <p>Our logistics team will coordinate the delivery as per your requirements. You will receive tracking information once the shipment is dispatched.</p>
                         
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="http://localhost:5173/profile" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">Track Your Order</a>
+                            <a href="http://localhost:5173/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">Track Your Order</a>
                         </div>
                         ${getEmailFooter()}
                     </div>
@@ -484,7 +632,7 @@ router.put("/:id/status", auth, admin, async (req, res) => {
                     <div style="padding: 30px;">
                         ${getEmailHeader()}
                         <div style="background: #dbeafe; padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0;">
-                            <h2 style="color: #1e40af; margin: 0;">👍 Your Order Has Been Approved!</h2>
+                            <h2 style="color: #1e40af; margin: 0;">Your Order Has Been Approved!</h2>
                         </div>
                         <p>Dear ${order.user.username},</p>
                         <p>Great news! Your quotation request (ID: <code>${order._id}</code>) has been <strong>approved</strong> by our export team.</p>
@@ -502,7 +650,7 @@ router.put("/:id/status", auth, admin, async (req, res) => {
                         <p>Your order is now awaiting final confirmation. Our team will be in touch shortly with payment and delivery details.</p>
                         
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="http://localhost:5173/profile" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
+                            <a href="http://localhost:5173/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
                         </div>
                         ${getEmailFooter()}
                     </div>
@@ -583,7 +731,7 @@ router.get("/total-products-count", async (req, res) => {
 
 // ADMIN: Update Order Pricing (can be done anytime, even after confirmation)
 router.put("/:id/pricing", auth, admin, async (req, res) => {
-    const { products, currency, notes } = req.body;
+    const { products, currency, notes, shippingCharges } = req.body;
     
     try {
         const order = await Order.findById(req.params.id).populate("user", "email username");
@@ -593,12 +741,12 @@ router.put("/:id/pricing", auth, admin, async (req, res) => {
         }
 
         // Update product prices
-        let total_amount = 0;
+        let products_total = 0;
         const updatedProducts = order.products.map((product, index) => {
             const priceUpdate = products[index];
             const unit_price = priceUpdate?.unit_price || product.unit_price || 0;
             const total_price = unit_price * product.quantity;
-            total_amount += total_price;
+            products_total += total_price;
             
             return {
                 ...product.toObject(),
@@ -607,10 +755,15 @@ router.put("/:id/pricing", auth, admin, async (req, res) => {
             };
         });
 
+        // Calculate total with shipping charges
+        const shipping = shippingCharges || order.shipping_charges || 0;
+        const total_amount = products_total + shipping;
+
         // Update order with new pricing
         const updateData = {
             products: updatedProducts,
             currency: currency || order.currency || 'INR',
+            shipping_charges: shipping,
             total_amount,
             price_updated_at: new Date()
         };
@@ -641,17 +794,25 @@ router.put("/:id/pricing", auth, admin, async (req, res) => {
             </tr>
         `).join('');
 
+        // Add shipping charges row if present
+        const shippingRow = shipping > 0 ? `
+            <tr style="background: #fef3c7;">
+                <td colspan="3" style="padding: 12px; border: 1px solid #e2e8f0; text-align: right; font-weight: 600;">Shipping Charges:</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: right; font-weight: bold; color: #d97706;">${symbol}${shipping.toLocaleString()}</td>
+            </tr>
+        ` : '';
+
         await transporter.sendMail({
             from: `"Novel Exporters" <${process.env.EMAIL_USER}>`,
             to: order.user.email,
-            subject: `💰 Price Update for Order #${order._id.toString().slice(-8).toUpperCase()} – Novel Exporters`,
+            subject: `Quotation Update for Order #${order._id.toString().slice(-8).toUpperCase()} – Novel Exporters`,
             attachments: getLogoAttachment(),
             html: `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
                     <div style="padding: 30px;">
                         ${getEmailHeader()}
                         <div style="background: #dbeafe; padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0;">
-                            <h2 style="color: #1e40af; margin: 0;">💰 Price Update</h2>
+                            <h2 style="color: #1e40af; margin: 0;">Quotation Update</h2>
                         </div>
                         <p>Dear ${order.user.username},</p>
                         <p>The pricing for your order has been updated. Please review the details below:</p>
@@ -667,6 +828,7 @@ router.put("/:id/pricing", auth, admin, async (req, res) => {
                             </thead>
                             <tbody>
                                 ${productRows}
+                                ${shippingRow}
                                 <tr style="background: #f0fdf4;">
                                     <td colspan="3" style="padding: 12px; border: 1px solid #e2e8f0; text-align: right; font-weight: bold;">Grand Total:</td>
                                     <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: right; font-weight: bold; font-size: 16px; color: #166534;">${symbol}${total_amount.toLocaleString()} ${currency || 'INR'}</td>
@@ -677,7 +839,7 @@ router.put("/:id/pricing", auth, admin, async (req, res) => {
                         ${notes ? `<div style="background: #f1f5f9; padding: 15px; border-radius: 8px; border-left: 4px solid #228B22; margin: 20px 0;"><p style="margin: 0;"><strong>Message from Export Team:</strong></p><p style="margin: 5px 0 0 0;">${notes}</p></div>` : ""}
                         
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="http://localhost:5173/profile" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
+                            <a href="http://localhost:5173/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
                         </div>
                         ${getEmailFooter()}
                     </div>

@@ -19,6 +19,7 @@ const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState("overview");
     const [orders, setOrders] = useState<any[]>([]);
     const [enquiries, setEnquiries] = useState<any[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
     const [users, setUsers] = useState<any[]>([]);
     const [analytics, setAnalytics] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -31,8 +32,9 @@ const AdminDashboard = () => {
         productPrices: {[productIndex: number]: number}; 
         currency: string; 
         deliveryDate: string; 
-        notes: string 
-    }}>({}); 
+        notes: string;
+        shippingCharges: number;
+    }}>({});
     const navigate = useNavigate();
     const { user, loading: authLoading } = useAuth();
     const adminEmail = "novelexporters@gmail.com";
@@ -140,20 +142,22 @@ const AdminDashboard = () => {
         };
         const symbol = currencySymbols[data.currency || 'INR'] || '';
         
-        // Calculate total from individual product prices
-        let totalAmount = 0;
+        // Calculate total from individual product prices + shipping
+        let productsTotal = 0;
         const products = order.products.map((p: any, index: number) => {
             const unitPrice = data.productPrices?.[index] || 0;
             const totalPrice = unitPrice * p.quantity;
-            totalAmount += totalPrice;
+            productsTotal += totalPrice;
             return { unit_price: unitPrice };
         });
+        const totalAmount = productsTotal + (data.shippingCharges || 0);
 
         const formattedDate = new Date(data.deliveryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-        const notes = `Total: ${symbol}${totalAmount.toLocaleString()} ${data.currency || 'INR'} | Estimated Delivery: ${formattedDate} | Notes: ${data.notes || 'None'}`;
+        const shippingNote = data.shippingCharges ? ` + Shipping: ${symbol}${data.shippingCharges.toLocaleString()}` : '';
+        const notes = `Total: ${symbol}${totalAmount.toLocaleString()} ${data.currency || 'INR'}${shippingNote} | Estimated Delivery: ${formattedDate} | Notes: ${data.notes || 'None'}`;
         
-        // First update pricing
-        await api.updateOrderPricing(orderId, products, data.currency || 'INR', data.notes);
+        // First update pricing (including shipping charges)
+        await api.updateOrderPricing(orderId, products, data.currency || 'INR', data.notes, data.shippingCharges || 0);
         
         // Then update status
         await updateStatus(orderId, status, notes, data.deliveryDate);
@@ -181,8 +185,8 @@ const AdminDashboard = () => {
                 return { unit_price: unitPrice };
             });
 
-            await api.updateOrderPricing(orderId, products, data.currency || order.currency || 'INR', data.notes);
-            toast.success("Prices updated successfully");
+            await api.updateOrderPricing(orderId, products, data.currency || order.currency || 'INR', data.notes, data.shippingCharges || 0);
+            toast.success("Prices updated successfully & user notified via email");
             setEditingPrices(null);
             setPricingData(prev => {
                 const updated = { ...prev };
@@ -215,7 +219,8 @@ const AdminDashboard = () => {
                 productPrices,
                 currency: order.currency || 'INR',
                 deliveryDate: order.estimated_delivery_date ? new Date(order.estimated_delivery_date).toISOString().split('T')[0] : '',
-                notes: ''
+                notes: '',
+                shippingCharges: order.shipping_charges || 0
             }
         }));
     };
@@ -233,13 +238,24 @@ const AdminDashboard = () => {
                 productPrices,
                 currency: order.currency || 'INR',
                 deliveryDate: order.estimated_delivery_date ? new Date(order.estimated_delivery_date).toISOString().split('T')[0] : '',
-                notes: ''
+                notes: '',
+                shippingCharges: order.shipping_charges || 0
             }
         }));
     };
 
-    // Calculate total for display
+    // Calculate total for display (including shipping)
     const calculateTotal = (orderId: string, order: any) => {
+        const data = pricingData[orderId];
+        if (!data?.productPrices) return 0;
+        const productsTotal = order.products.reduce((sum: number, p: any, index: number) => {
+            return sum + (data.productPrices[index] || 0) * p.quantity;
+        }, 0);
+        return productsTotal + (data.shippingCharges || 0);
+    };
+
+    // Calculate products total only (without shipping)
+    const calculateProductsTotal = (orderId: string, order: any) => {
         const data = pricingData[orderId];
         if (!data?.productPrices) return 0;
         return order.products.reduce((sum: number, p: any, index: number) => {
@@ -705,20 +721,24 @@ const AdminDashboard = () => {
                                         <div className="p-6 rounded-3xl bg-indigo-500/5 border border-indigo-500/10 h-64 flex flex-col justify-center">
                                             <p className="text-sm text-muted-foreground mb-4">Total product-level interest across all carts and orders:</p>
                                             <div className="space-y-4 overflow-y-auto max-h-40 pr-2 custom-scrollbar">
-                                                {analytics?.productStats && Object.entries(analytics.productStats).sort((a: any, b: any) => b[1] - a[1]).map(([name, qty]: any) => (
-                                                    <div key={name} className="space-y-1">
-                                                        <div className="flex justify-between text-xs font-bold">
-                                                            <span>{name}</span>
-                                                            <span>{qty >= 1000 ? `${(qty / 1000).toFixed(1)} kg` : `${qty} g`}</span>
+                                                {analytics?.productStats && (() => {
+                                                    const entries = Object.entries(analytics.productStats).sort((a: any, b: any) => b[1] - a[1]);
+                                                    const maxQty = entries.length > 0 ? Math.max(...entries.map(([, qty]: any) => qty)) : 1;
+                                                    return entries.map(([name, qty]: any) => (
+                                                        <div key={name} className="space-y-1">
+                                                            <div className="flex justify-between text-xs font-bold">
+                                                                <span>{name}</span>
+                                                                <span>{qty >= 1000 ? `${(qty / 1000).toFixed(1)} kg` : `${qty} g`}</span>
+                                                            </div>
+                                                            <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="bg-indigo-500 h-full rounded-full transition-all duration-1000"
+                                                                    style={{ width: `${(qty / maxQty) * 100}%` }}
+                                                                />
+                                                            </div>
                                                         </div>
-                                                        <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                                                            <div
-                                                                className="bg-indigo-500 h-full rounded-full transition-all duration-1000"
-                                                                style={{ width: `${Math.min((qty / 100) * 100, 100)}%` }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    ));
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
@@ -733,7 +753,12 @@ const AdminDashboard = () => {
                                     <div className="flex items-center gap-4">
                                         <div className="relative">
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                            <input className="pl-10 pr-4 py-2 rounded-xl bg-muted/50 border-none text-sm w-64" placeholder="Search orders..." />
+                                            <input 
+                                                className="pl-10 pr-4 py-2 rounded-xl bg-muted/50 border-none text-sm w-64" 
+                                                placeholder="Search orders..." 
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                            />
                                         </div>
                                         <Button 
                                             variant="warm" 
@@ -751,7 +776,22 @@ const AdminDashboard = () => {
                                 </div>
 
                                 <div className="space-y-4">
-                                    {orders.map((order) => (
+                                    {orders.filter((order) => {
+                                        if (!searchQuery.trim()) return true;
+                                        const query = searchQuery.toLowerCase();
+                                        const orderId = order._id?.toLowerCase() || '';
+                                        const customerName = order.user?.username?.toLowerCase() || '';
+                                        const customerEmail = order.user?.email?.toLowerCase() || '';
+                                        const customerPhone = order.user?.phone?.toLowerCase() || '';
+                                        const productNames = order.products?.map((p: any) => p.name?.toLowerCase()).join(' ') || '';
+                                        const status = order.status?.toLowerCase() || '';
+                                        return orderId.includes(query) || 
+                                               customerName.includes(query) || 
+                                               customerEmail.includes(query) || 
+                                               customerPhone.includes(query) || 
+                                               productNames.includes(query) ||
+                                               status.includes(query);
+                                    }).map((order) => (
                                         <div key={order._id} className="p-6 rounded-2xl bg-muted/20 border border-border hover:border-primary/20 transition-all">
                                             {/* Order Header */}
                                             <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
@@ -913,12 +953,65 @@ const AdminDashboard = () => {
                                                                 );
                                                             })}
                                                         </div>
-                                                        <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
-                                                            <span className="font-bold text-lg">Grand Total:</span>
-                                                            <span className="font-bold text-xl text-green-600">
-                                                                {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ', 'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'}[pricingData[order._id]?.currency || 'INR'] || '₹'}
-                                                                {calculateTotal(order._id, order).toLocaleString()}
-                                                            </span>
+                                                        
+                                                        {/* Shipping Charges */}
+                                                        <div className="mt-4 pt-4 border-t border-border">
+                                                            <div className="flex items-center gap-4 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
+                                                                <div className="flex-1">
+                                                                    <p className="font-semibold text-sm flex items-center gap-2">
+                                                                        🚢 Shipping Charges
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground">Air/Sea freight charges</p>
+                                                                </div>
+                                                                <div className="w-40">
+                                                                    <Input
+                                                                        type="number"
+                                                                        placeholder="0"
+                                                                        value={pricingData[order._id]?.shippingCharges || ''}
+                                                                        onChange={(e) => setPricingData(prev => ({
+                                                                            ...prev,
+                                                                            [order._id]: {
+                                                                                ...prev[order._id],
+                                                                                shippingCharges: parseFloat(e.target.value) || 0
+                                                                            }
+                                                                        }))}
+                                                                        className="rounded-lg h-8 text-sm"
+                                                                    />
+                                                                </div>
+                                                                <div className="w-28 text-right">
+                                                                    <p className="font-bold text-amber-600">
+                                                                        {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ', 'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'}[pricingData[order._id]?.currency || 'INR'] || '₹'}
+                                                                        {(pricingData[order._id]?.shippingCharges || 0).toLocaleString()}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* Subtotal and Grand Total */}
+                                                        <div className="mt-4 pt-4 border-t border-border space-y-2">
+                                                            <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                                                <span>Products Subtotal:</span>
+                                                                <span>
+                                                                    {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ', 'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'}[pricingData[order._id]?.currency || 'INR'] || '₹'}
+                                                                    {calculateProductsTotal(order._id, order).toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                            {(pricingData[order._id]?.shippingCharges || 0) > 0 && (
+                                                                <div className="flex justify-between items-center text-sm text-amber-600">
+                                                                    <span>Shipping:</span>
+                                                                    <span>
+                                                                        +{{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ', 'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'}[pricingData[order._id]?.currency || 'INR'] || '₹'}
+                                                                        {(pricingData[order._id]?.shippingCharges || 0).toLocaleString()}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            <div className="flex justify-between items-center pt-2 border-t border-border">
+                                                                <span className="font-bold text-lg">Grand Total:</span>
+                                                                <span className="font-bold text-xl text-green-600">
+                                                                    {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ', 'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'}[pricingData[order._id]?.currency || 'INR'] || '₹'}
+                                                                    {calculateTotal(order._id, order).toLocaleString()}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
 
@@ -1023,12 +1116,65 @@ const AdminDashboard = () => {
                                                                 );
                                                             })}
                                                         </div>
-                                                        <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
-                                                            <span className="font-bold">New Total:</span>
-                                                            <span className="font-bold text-xl text-amber-600">
-                                                                {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ'}[pricingData[order._id]?.currency || order.currency || 'INR'] || '₹'}
-                                                                {calculateTotal(order._id, order).toLocaleString()}
-                                                            </span>
+                                                        
+                                                        {/* Shipping Charges for Update */}
+                                                        <div className="mt-4 pt-4 border-t border-border">
+                                                            <div className="flex items-center gap-4 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
+                                                                <div className="flex-1">
+                                                                    <p className="font-semibold text-sm flex items-center gap-2">
+                                                                        🚢 Shipping Charges
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground">Air/Sea freight charges</p>
+                                                                </div>
+                                                                <div className="w-40">
+                                                                    <Input
+                                                                        type="number"
+                                                                        placeholder="0"
+                                                                        value={pricingData[order._id]?.shippingCharges || ''}
+                                                                        onChange={(e) => setPricingData(prev => ({
+                                                                            ...prev,
+                                                                            [order._id]: {
+                                                                                ...prev[order._id],
+                                                                                shippingCharges: parseFloat(e.target.value) || 0
+                                                                            }
+                                                                        }))}
+                                                                        className="rounded-lg h-8 text-sm"
+                                                                    />
+                                                                </div>
+                                                                <div className="w-28 text-right">
+                                                                    <p className="font-bold text-amber-600">
+                                                                        {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ'}[pricingData[order._id]?.currency || order.currency || 'INR'] || '₹'}
+                                                                        {(pricingData[order._id]?.shippingCharges || 0).toLocaleString()}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* Subtotal and Grand Total */}
+                                                        <div className="mt-4 pt-4 border-t border-border space-y-2">
+                                                            <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                                                <span>Products Subtotal:</span>
+                                                                <span>
+                                                                    {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ'}[pricingData[order._id]?.currency || order.currency || 'INR'] || '₹'}
+                                                                    {calculateProductsTotal(order._id, order).toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                            {(pricingData[order._id]?.shippingCharges || 0) > 0 && (
+                                                                <div className="flex justify-between items-center text-sm text-amber-600">
+                                                                    <span>Shipping:</span>
+                                                                    <span>
+                                                                        +{{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ'}[pricingData[order._id]?.currency || order.currency || 'INR'] || '₹'}
+                                                                        {(pricingData[order._id]?.shippingCharges || 0).toLocaleString()}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            <div className="flex justify-between items-center pt-2 border-t border-border">
+                                                                <span className="font-bold">New Total:</span>
+                                                                <span className="font-bold text-xl text-amber-600">
+                                                                    {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ'}[pricingData[order._id]?.currency || order.currency || 'INR'] || '₹'}
+                                                                    {calculateTotal(order._id, order).toLocaleString()}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
 
@@ -1079,6 +1225,15 @@ const AdminDashboard = () => {
                                                                 </span>
                                                             </div>
                                                         ))}
+                                                        {order.shipping_charges > 0 && (
+                                                            <div className="flex justify-between text-sm text-amber-600">
+                                                                <span>🚢 Shipping Charges</span>
+                                                                <span className="font-semibold">
+                                                                    {{'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ'}[order.currency || 'INR'] || '₹'}
+                                                                    {(order.shipping_charges || 0).toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                        )}
                                                         <div className="pt-2 border-t border-green-200 dark:border-green-800 flex justify-between font-bold">
                                                             <span>Total</span>
                                                             <span className="text-green-700 dark:text-green-400">
@@ -1230,20 +1385,24 @@ const AdminDashboard = () => {
                                         </h4>
                                         <p className="text-sm text-muted-foreground mb-6">Total product-level interest across all carts and orders:</p>
                                         <div className="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                                            {analytics?.productStats && Object.entries(analytics.productStats).sort((a: any, b: any) => b[1] - a[1]).map(([name, qty]: any) => (
-                                                <div key={name} className="space-y-2">
-                                                    <div className="flex justify-between text-sm font-bold">
-                                                        <span>{name}</span>
-                                                        <span className="text-indigo-600">{qty >= 1000 ? `${(qty / 1000).toFixed(1)} kg` : `${qty} g`}</span>
+                                            {analytics?.productStats && (() => {
+                                                const entries = Object.entries(analytics.productStats).sort((a: any, b: any) => b[1] - a[1]);
+                                                const maxQty = entries.length > 0 ? Math.max(...entries.map(([, qty]: any) => qty)) : 1;
+                                                return entries.map(([name, qty]: any) => (
+                                                    <div key={name} className="space-y-2">
+                                                        <div className="flex justify-between text-sm font-bold">
+                                                            <span>{name}</span>
+                                                            <span className="text-indigo-600">{qty >= 1000 ? `${(qty / 1000).toFixed(1)} kg` : `${qty} g`}</span>
+                                                        </div>
+                                                        <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                                                            <div
+                                                                className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full transition-all duration-1000"
+                                                                style={{ width: `${(qty / maxQty) * 100}%` }}
+                                                            />
+                                                        </div>
                                                     </div>
-                                                    <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
-                                                        <div
-                                                            className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full transition-all duration-1000"
-                                                            style={{ width: `${Math.min((qty / 100) * 100, 100)}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                ));
+                                            })()}
                                             {(!analytics?.productStats || Object.keys(analytics.productStats).length === 0) && (
                                                 <p className="text-muted-foreground text-sm italic">No product data available yet.</p>
                                             )}

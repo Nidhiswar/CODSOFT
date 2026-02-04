@@ -22,6 +22,7 @@ import TermsOfService from "./pages/TermsOfService";
 import ConsentRequired from "./pages/ConsentRequired";
 import { api } from "./lib/api";
 import ConsentOverlay from "./components/ConsentOverlay";
+import ScrollToTop from "./components/ScrollToTop";
 
 import { CartProvider } from "./hooks/useCart";
 
@@ -31,6 +32,8 @@ interface User {
   id: string;
   username: string;
   email: string;
+  phone?: string;
+  profilePicture?: string;
   isAdmin: boolean;
   role?: string;
   hasConsented?: boolean;
@@ -41,6 +44,7 @@ interface User {
 const AppContent = ({ user, setUser, handleLogout, handleLogin, handleConsentAccept }: any) => {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       {user && user.showConsentOverlay && (
         <ConsentOverlay
           onAccept={handleConsentAccept}
@@ -107,7 +111,7 @@ const AppContent = ({ user, setUser, handleLogout, handleLogin, handleConsentAcc
           path="/profile"
           element={
             <Layout user={user} onLogout={handleLogout}>
-              <Profile user={user} onLogout={handleLogout} />
+              <Profile user={user} onLogout={handleLogout} onUserUpdate={setUser} />
             </Layout>
           }
         />
@@ -199,8 +203,8 @@ const App = () => {
           isAdmin: updatedUser.role === 'admin' && updatedUser.email === 'novelexporters@gmail.com',
           showConsentOverlay: false // Hide overlay after consent
         });
-        // Redirect to products page after successful consent
-        window.location.href = "/products";
+        // Redirect to home page after successful consent for exploring & ordering products
+        window.location.href = "/";
       }
     } catch (err) {
       console.error("Failed to record consent:", err);

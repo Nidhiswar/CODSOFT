@@ -4,24 +4,29 @@ import ProductCard from "@/components/ProductCard";
 import { products, Product } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Calendar, ScrollText, CheckCircle, ArrowRight, Check } from "lucide-react";
+import { X, MapPin, Calendar, ScrollText, CheckCircle, ArrowRight, Check, Search, LogIn } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
 import airExportImg from "@/assets/air-export.jpg";
+import { Input } from "@/components/ui/input";
 
 const categories = ["All", "Leaves", "Seeds", "Bark", "Flowers"];
 
 const Products = ({ user }: { user: any }) => {
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, cart } = useCart();
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredProducts =
-    activeCategory === "All"
-      ? products
-      : products.filter((p) => p.category === activeCategory);
+  const filteredProducts = products.filter((p) => {
+    const matchesCategory = activeCategory === "All" || p.category === activeCategory;
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.tamilName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   // Lock scroll when product is selected
   useEffect(() => {
@@ -60,6 +65,28 @@ const Products = ({ user }: { user: any }) => {
       {/* Products Section */}
       <section className="section-padding bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500">
         <div className="container-custom">
+          {/* Search Bar */}
+          <div className="flex justify-center mb-6 sm:mb-8">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search spices by name, Tamil name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 pr-4 py-3 w-full rounded-full border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-spice-gold focus:border-transparent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Category Filter */}
           <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-12 md:mb-16">
             {categories.map((category) => (
@@ -85,6 +112,7 @@ const Products = ({ user }: { user: any }) => {
                 product={product}
                 index={index}
                 onClick={(p) => setSelectedProduct(p)}
+                user={user}
               />
             ))}
           </div>
@@ -99,7 +127,7 @@ const Products = ({ user }: { user: any }) => {
       </section>
 
       {/* Full-screen Product Detail View (Glass View) */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {selectedProduct && (
           <>
             {/* Backdrop */}
@@ -107,7 +135,7 @@ const Products = ({ user }: { user: any }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
               onClick={() => setSelectedProduct(null)}
               className="fixed inset-0 bg-zinc-950/85 backdrop-blur-xl z-[100]"
             />
@@ -116,15 +144,15 @@ const Products = ({ user }: { user: any }) => {
             <div className="fixed inset-0 z-[101] flex items-center justify-center p-2 sm:p-4 md:p-8 pointer-events-none">
               <motion.div
                 layoutId={`card-container-${selectedProduct.id}`}
-                initial={{ opacity: 0, scale: 0.8, y: 40 }}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.85, y: 30 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ 
                   type: "spring",
-                  stiffness: 400,
-                  damping: 28,
-                  mass: 0.8,
-                  opacity: { duration: 0.15 }
+                  stiffness: 300,
+                  damping: 30,
+                  mass: 1,
+                  opacity: { duration: 0.25, ease: [0.4, 0, 0.2, 1] }
                 }}
                 className="w-full max-w-6xl h-full max-h-[90vh] sm:max-h-[85vh] bg-white dark:bg-zinc-900 overflow-hidden rounded-xl sm:rounded-2xl md:rounded-[2.5rem] shadow-[0_0_120px_rgba(196,160,82,0.15)] border border-spice-gold/20 pointer-events-auto flex flex-col md:flex-row"
               >
@@ -150,9 +178,10 @@ const Products = ({ user }: { user: any }) => {
                 {/* Details Section */}
                 <motion.div 
                   className="md:w-1/2 h-3/5 sm:h-1/2 md:h-full overflow-y-auto p-4 sm:p-6 md:p-8 lg:p-12 bg-white/5 backdrop-blur-3xl relative"
-                  initial={{ opacity: 0, x: 30 }}
+                  initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1, duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ delay: 0.1, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
                 >
                   <div className="flex justify-between items-start mb-4 sm:mb-6 md:mb-8">
                     <div className="space-y-1">
@@ -215,16 +244,12 @@ const Products = ({ user }: { user: any }) => {
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {selectedProduct.certifications.map((cert) => {
-                          const isSpecial = ["IEC", "FSSAI", "ISO 22000"].includes(cert);
                           return (
                             <div
                               key={cert}
-                              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all duration-300 ${isSpecial
-                                ? "bg-spice-gold/10 border-spice-gold/30 text-spice-gold shadow-[0_0_15px_rgba(196,160,82,0.1)]"
-                                : "bg-white/5 border-white/10 text-foreground"
-                                }`}
+                              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all duration-300 bg-spice-gold/10 border-spice-gold/30 text-spice-gold shadow-[0_0_15px_rgba(196,160,82,0.1)]"
                             >
-                              <Check className={`w-3.5 h-3.5 ${isSpecial ? "text-spice-gold" : "text-green-500"}`} />
+                              <Check className="w-3.5 h-3.5 text-spice-gold" />
                               <span className="text-xs font-black uppercase tracking-wider">{cert}</span>
                             </div>
                           );
@@ -235,27 +260,53 @@ const Products = ({ user }: { user: any }) => {
 
                   {/* Add to Cart Button */}
                   <div className="mt-8">
-                    <Button
-                      variant="default"
-                      className={`w-full py-4 text-lg font-bold tracking-wide transition-all duration-300 ${isAddedToCart ? 'bg-green-600 hover:bg-green-600' : ''}`}
-                      onClick={() => {
-                        if (selectedProduct) {
-                          addToCart(selectedProduct);
-                          setIsAddedToCart(true);
-                          toast.success(`Added ${selectedProduct.name} to cart`);
-                          setTimeout(() => setIsAddedToCart(false), 2000);
-                        }
-                      }}
-                    >
-                      {isAddedToCart ? (
-                        <>
-                          <Check className="w-5 h-5 mr-2" />
-                          Added to Cart
-                        </>
-                      ) : (
-                        'Add to Cart'
-                      )}
-                    </Button>
+                    {!user ? (
+                      <Button
+                        variant="default"
+                        className="w-full py-4 text-lg font-bold tracking-wide bg-zinc-700 hover:bg-zinc-600"
+                        onClick={() => {
+                          toast.error("Login to order products");
+                          navigate('/login');
+                        }}
+                      >
+                        <LogIn className="w-5 h-5 mr-2" />
+                        Login to Order Products
+                      </Button>
+                    ) : cart.find(item => item.id === selectedProduct.id) ? (
+                      <Button
+                        variant="outline"
+                        className="w-full py-4 text-lg font-bold tracking-wide border-spice-gold text-spice-gold hover:bg-spice-gold/10"
+                        onClick={() => {
+                          setSelectedProduct(null);
+                          navigate('/profile');
+                        }}
+                      >
+                        <Check className="w-5 h-5 mr-2" />
+                        Already in Cart - View Cart
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="default"
+                        className={`w-full py-4 text-lg font-bold tracking-wide transition-all duration-300 ${isAddedToCart ? 'bg-green-600 hover:bg-green-600' : ''}`}
+                        onClick={() => {
+                          if (selectedProduct) {
+                            addToCart(selectedProduct);
+                            setIsAddedToCart(true);
+                            toast.success(`Added ${selectedProduct.name} to cart`);
+                            setTimeout(() => setIsAddedToCart(false), 2000);
+                          }
+                        }}
+                      >
+                        {isAddedToCart ? (
+                          <>
+                            <Check className="w-5 h-5 mr-2" />
+                            Added to Cart
+                          </>
+                        ) : (
+                          'Add to Cart'
+                        )}
+                      </Button>
+                    )}
                   </div>
 
                   <motion.div 
@@ -297,13 +348,13 @@ const Products = ({ user }: { user: any }) => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-6 rounded-3xl bg-white dark:bg-zinc-800 shadow-xl shadow-black/5 group hover:bg-spice-gold transition-colors duration-500">
-                  <h4 className="text-lg font-bold mb-2 group-hover:text-black">Sea Freight</h4>
-                  <p className="text-sm text-zinc-500 group-hover:text-black/80">Bulk shipments via Tuticorin & Kochi ports with industrial-grade containerization.</p>
+                <div className="p-6 rounded-3xl bg-zinc-800 shadow-xl shadow-black/5 group hover:bg-spice-gold transition-colors duration-500">
+                  <h4 className="text-lg font-bold mb-2 text-white group-hover:text-black">Sea Freight</h4>
+                  <p className="text-sm text-zinc-300 group-hover:text-black/80">Bulk shipments via Tuticorin & Kochi ports with industrial-grade containerization.</p>
                 </div>
-                <div className="p-6 rounded-3xl bg-white dark:bg-zinc-800 shadow-xl shadow-black/5 group hover:bg-primary transition-colors duration-500">
-                  <h4 className="text-lg font-bold mb-2 group-hover:text-white">Air Priority</h4>
-                  <p className="text-sm text-zinc-500 group-hover:text-white/80">Urgent delivery for high-value spice extracts and fresh leaves via Chennai Cargo.</p>
+                <div className="p-6 rounded-3xl bg-zinc-800 shadow-xl shadow-black/5 group hover:bg-primary transition-colors duration-500">
+                  <h4 className="text-lg font-bold mb-2 text-white group-hover:text-white">Air Priority</h4>
+                  <p className="text-sm text-zinc-300 group-hover:text-white/80">Urgent delivery for high-value spice extracts and fresh leaves via Chennai Cargo.</p>
                 </div>
               </div>
             </div>
@@ -318,8 +369,8 @@ const Products = ({ user }: { user: any }) => {
                   alt="Novel Exporters Air Cargo"
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-12">
-                  <div className="text-white space-y-2">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end justify-end p-12">
+                  <div className="text-white space-y-2 text-right max-w-[75%]">
                     <h3 className="text-2xl font-bold">Fast & Traceable</h3>
                     <p className="text-white/70 font-light italic">"Ensuring aroma preservation through altitude-optimized cargo management."</p>
                   </div>
@@ -327,8 +378,8 @@ const Products = ({ user }: { user: any }) => {
               </motion.div>
 
               {/* Floating Badge */}
-              <div className="absolute -bottom-8 -left-8 w-40 h-40 bg-spice-gold rounded-full flex items-center justify-center p-6 shadow-2xl rotate-12 transition-transform hover:rotate-0">
-                <p className="text-black text-center font-black text-sm uppercase tracking-tighter leading-none">Global Certified Quality</p>
+              <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-spice-gold rounded-full flex items-center justify-center p-3 shadow-2xl rotate-12 transition-transform hover:rotate-0">
+                <p className="text-black text-center font-bold text-[9px] uppercase tracking-tight leading-tight">Global Certified Quality</p>
               </div>
             </div>
           </div>

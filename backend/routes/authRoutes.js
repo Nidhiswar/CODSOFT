@@ -87,7 +87,7 @@ router.post("/forgot-password", async (req, res) => {
         await transporter.sendMail({
             from: `"Novel Exporters Security" <${process.env.EMAIL_USER}>`,
             to: user.email,
-            subject: "🔐 Password Reset Request – Novel Exporters",
+            subject: "Password Reset Request – Novel Exporters",
             attachments: getLogoAttachment(),
             html: `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
@@ -185,6 +185,26 @@ router.post("/cart", auth, async (req, res) => {
     const { cart } = req.body;
     try {
         const user = await User.findByIdAndUpdate(req.user.id, { cart }, { new: true }).select("-password");
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+// Update Profile
+router.put("/profile", auth, async (req, res) => {
+    const { username, phone, profilePicture } = req.body;
+    try {
+        const updateData = {};
+        if (username) updateData.username = username;
+        if (phone !== undefined) updateData.phone = phone;
+        if (profilePicture !== undefined) updateData.profilePicture = profilePicture;
+        
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            updateData,
+            { new: true }
+        ).select("-password");
         res.json(user);
     } catch (err) {
         res.status(500).json({ message: "Server error" });

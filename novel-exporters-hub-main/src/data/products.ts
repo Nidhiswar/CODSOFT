@@ -133,3 +133,72 @@ export const products: Product[] = [
     certifications: ["FSSAI", "Ethically Sourced", "Organic Practices"],
   },
 ];
+
+// Related products mapping - products that complement each other
+export const relatedProducts: { [key: string]: string[] } = {
+  // Curry leaves go well with mustard seeds, pepper, and other tempering spices
+  "fresh-curry-leaves": ["dry-curry-leaves", "pepper", "cardamom", "bay-leaves"],
+  "dry-curry-leaves": ["fresh-curry-leaves", "pepper", "cinnamon", "bay-leaves"],
+  
+  // Pepper pairs with cardamom, cloves, cinnamon for garam masala
+  "pepper": ["cardamom", "cloves", "cinnamon", "nutmeg"],
+  
+  // Cardamom for sweet and savory dishes
+  "cardamom": ["pepper", "cloves", "cinnamon", "nutmeg", "star-anise"],
+  
+  // Cloves for aromatic cooking
+  "cloves": ["cardamom", "cinnamon", "pepper", "bay-leaves", "star-anise"],
+  
+  // Nutmeg and mace naturally pair
+  "nutmeg": ["mace", "cardamom", "cinnamon", "cloves"],
+  "mace": ["nutmeg", "cardamom", "pepper", "cloves"],
+  
+  // Kapok buds - traditional and medicinal
+  "kapok-buds": ["cinnamon", "cardamom", "star-anise", "cloves"],
+  
+  // Cinnamon for desserts and curries
+  "cinnamon": ["cardamom", "cloves", "nutmeg", "star-anise", "bay-leaves"],
+  
+  // Star anise for biryani and Chinese-style cooking
+  "star-anise": ["cinnamon", "cloves", "cardamom", "bay-leaves", "pepper"],
+  
+  // Bay leaves for rice dishes and curries
+  "bay-leaves": ["fresh-curry-leaves", "cinnamon", "cardamom", "cloves", "star-anise"],
+};
+
+// Get recommended products based on cart items
+export const getRecommendedProducts = (cartItems: { id: string }[], limit: number = 4): Product[] => {
+  const cartIds = new Set(cartItems.map(item => item.id));
+  const recommendedIds = new Set<string>();
+  
+  // Collect related products from cart items
+  cartItems.forEach(item => {
+    const related = relatedProducts[item.id] || [];
+    related.forEach(id => {
+      if (!cartIds.has(id)) {
+        recommendedIds.add(id);
+      }
+    });
+  });
+  
+  // If we don't have enough recommendations, add products from same categories
+  if (recommendedIds.size < limit) {
+    const cartCategories = new Set(
+      cartItems
+        .map(item => products.find(p => p.id === item.id)?.category)
+        .filter(Boolean)
+    );
+    
+    products.forEach(product => {
+      if (!cartIds.has(product.id) && !recommendedIds.has(product.id) && cartCategories.has(product.category)) {
+        recommendedIds.add(product.id);
+      }
+    });
+  }
+  
+  // Convert IDs to products and limit
+  return Array.from(recommendedIds)
+    .map(id => products.find(p => p.id === id))
+    .filter((p): p is Product => p !== undefined)
+    .slice(0, limit);
+};

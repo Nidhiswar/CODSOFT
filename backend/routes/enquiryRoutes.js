@@ -82,7 +82,7 @@ router.post("/", async (req, res) => {
     await transporter.sendMail({
       from: `"Novel Exporters" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "✅ Enquiry Received – Novel Exporters",
+      subject: "Enquiry Received – Novel Exporters",
       attachments: getLogoAttachment(),
       html: `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
