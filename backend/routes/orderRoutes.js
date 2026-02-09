@@ -21,7 +21,7 @@ const ADMIN_EMAIL = "novelexporters@gmail.com";
 
 // Create new Order (Quotation Request)
 router.post("/", auth, async (req, res) => {
-    const { products, delivery_request, requested_delivery_date } = req.body;
+    const { products, delivery_request, requested_delivery_date, delivery_location } = req.body;
 
     if (!products || products.length === 0) {
         return res.status(400).json({ message: "No products selected" });
@@ -35,6 +35,7 @@ router.post("/", auth, async (req, res) => {
             products,
             delivery_request,
             requested_delivery_date,
+            delivery_location,
             status: "pending"
         });
 
@@ -54,6 +55,7 @@ router.post("/", auth, async (req, res) => {
                         <p><b>From:</b> ${user.username} (${user.email})</p>
                         <p><b>Phone:</b> ${user.phone || "Not provided"}</p>
                         <p><b>Requested Delivery:</b> ${requested_delivery_date ? new Date(requested_delivery_date).toLocaleDateString() : "Flexible"}</p>
+                        <p><b>Delivery Location:</b> ${delivery_location || "Not specified"}</p>
                         <p><b>Delivery Note:</b> ${delivery_request || "Standard shipping"}</p>
                         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                             <thead>
@@ -403,6 +405,27 @@ router.put("/my-orders/:id/modify", auth, async (req, res) => {
         
         const user = await User.findById(req.user.id);
         
+        // Save modification history
+        const previousProducts = order.products.map(p => ({
+            name: p.name,
+            quantity: p.quantity,
+            unit: p.unit || 'kg'
+        }));
+        const newProducts = products.map(p => ({
+            name: p.name,
+            quantity: p.quantity,
+            unit: p.unit || 'kg'
+        }));
+        
+        if (!order.modification_history) {
+            order.modification_history = [];
+        }
+        order.modification_history.push({
+            modified_at: new Date(),
+            previous_products: previousProducts,
+            new_products: newProducts
+        });
+        
         // Update order products
         order.products = products;
         await order.save();
@@ -731,7 +754,7 @@ router.get("/total-products-count", async (req, res) => {
 
 // ADMIN: Update Order Pricing (can be done anytime, even after confirmation)
 router.put("/:id/pricing", auth, admin, async (req, res) => {
-    const { products, currency, notes, shippingCharges } = req.body;
+    const { products, currency, notes, shippingCharges, deliveryLocation } = req.body;
     
     try {
         const order = await Order.findById(req.params.id).populate("user", "email username");
@@ -759,14 +782,37 @@ router.put("/:id/pricing", auth, admin, async (req, res) => {
         const shipping = shippingCharges || order.shipping_charges || 0;
         const total_amount = products_total + shipping;
 
+        // Save price update history
+        if (!order.price_update_history) {
+            order.price_update_history = [];
+        }
+        order.price_update_history.push({
+            updated_at: new Date(),
+            total_amount,
+            currency: currency || order.currency || 'INR',
+            shipping_charges: shipping,
+            products: updatedProducts.map(p => ({
+                name: p.name,
+                quantity: p.quantity,
+                unit: p.unit || 'kg',
+                unit_price: p.unit_price || 0
+            })),
+            notes: notes || ''
+        });
+
         // Update order with new pricing
         const updateData = {
             products: updatedProducts,
             currency: currency || order.currency || 'INR',
             shipping_charges: shipping,
             total_amount,
-            price_updated_at: new Date()
+            price_updated_at: new Date(),
+            price_update_history: order.price_update_history
         };
+
+        if (deliveryLocation) {
+            updateData.delivery_location = deliveryLocation;
+        }
 
         if (notes) {
             updateData.admin_notes = notes;

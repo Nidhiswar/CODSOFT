@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Calendar, ScrollText, CheckCircle, ArrowRight, Check, Search, LogIn } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
-import airExportImg from "@/assets/air-export.jpg";
 import { Input } from "@/components/ui/input";
 
 const categories = ["All", "Leaves", "Seeds", "Bark", "Flowers"];
@@ -41,8 +40,15 @@ const Products = ({ user }: { user: any }) => {
     <div className="overflow-hidden relative min-h-screen bg-background text-foreground">
       {/* Hero Section */}
       <section className="relative py-16 sm:py-20 md:py-24 lg:py-32 bg-zinc-950 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center opacity-20" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-950/50 to-zinc-950" />
+        <div 
+          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center"
+          style={{ 
+            opacity: 0.6,
+            filter: 'brightness(1.1) contrast(1.1) saturate(1.15)'
+          }} 
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30" />
         <div className="container-custom relative z-10 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -120,7 +126,7 @@ const Products = ({ user }: { user: any }) => {
           {/* Empty State */}
           {filteredProducts.length === 0 && (
             <div className="text-center py-12 sm:py-16 md:py-24">
-              <p className="text-zinc-500 text-base sm:text-lg">No authentic spices found in the {activeCategory} category.</p>
+              <p className="text-zinc-600 dark:text-zinc-400 text-base sm:text-lg">No authentic spices found in the {activeCategory} category.</p>
             </div>
           )}
         </div>
@@ -212,7 +218,7 @@ const Products = ({ user }: { user: any }) => {
                         <MapPin className="w-6 h-6 text-spice-gold" />
                       </div>
                       <div>
-                        <span className="text-[10px] uppercase font-black tracking-widest text-zinc-400 block mb-1">Origin</span>
+                        <span className="text-[10px] uppercase font-black tracking-widest text-zinc-500 dark:text-zinc-400 block mb-1">Origin</span>
                         <p className="font-bold text-foreground">{selectedProduct.origin}</p>
                       </div>
                     </div>
@@ -222,7 +228,7 @@ const Products = ({ user }: { user: any }) => {
                         <Calendar className="w-6 h-6 text-primary" />
                       </div>
                       <div>
-                        <span className="text-[10px] uppercase font-black tracking-widest text-zinc-400 block mb-1">Harvest Window</span>
+                        <span className="text-[10px] uppercase font-black tracking-widest text-zinc-500 dark:text-zinc-400 block mb-1">Harvest Window</span>
                         <p className="font-bold text-foreground">{selectedProduct.harvestTiming}</p>
                       </div>
                     </div>
@@ -230,7 +236,7 @@ const Products = ({ user }: { user: any }) => {
 
                   <div className="space-y-8">
                     <div>
-                      <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-400 mb-3 flex items-center gap-2">
+                      <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-500 dark:text-zinc-400 mb-3 flex items-center gap-2">
                         <ScrollText className="w-4 h-4" /> Export Quality Profile
                       </h4>
                       <p className="text-lg leading-relaxed text-zinc-600 dark:text-zinc-300 font-light italic">
@@ -239,7 +245,7 @@ const Products = ({ user }: { user: any }) => {
                     </div>
 
                     <div>
-                      <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-400 mb-4 flex items-center gap-2">
+                      <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-500 dark:text-zinc-400 mb-4 flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-spice-gold" /> Quality Certifications
                       </h4>
                       <div className="flex flex-wrap gap-2">
@@ -365,7 +371,7 @@ const Products = ({ user }: { user: any }) => {
                 className="rounded-[3rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.2)] aspect-video md:aspect-square relative group"
               >
                 <img
-                  src={airExportImg}
+                  src="/assets/air-export-cargo.png"
                   alt="Novel Exporters Air Cargo"
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                 />

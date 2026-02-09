@@ -6,8 +6,16 @@ const Contact = () => {
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
-      <section className="relative py-16 sm:py-20 md:py-24 lg:py-32 gradient-hero">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center opacity-15" />
+      <section className="relative py-16 sm:py-20 md:py-24 lg:py-32 bg-zinc-950 overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center"
+          style={{ 
+            opacity: 0.6,
+            filter: 'brightness(1.1) contrast(1.1) saturate(1.15)'
+          }} 
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30" />
         <div className="container-custom relative z-10 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-serif text-white mb-4 sm:mb-6 animate-fade-in">
             Contact Us

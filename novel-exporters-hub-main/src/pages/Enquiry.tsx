@@ -70,20 +70,6 @@ const Enquiry = () => {
 
   return (
     <div className="overflow-hidden">
-      {/* ---------- HERO SECTION ---------- */}
-      <section className="relative py-16 sm:py-20 md:py-24 lg:py-32 gradient-hero">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center opacity-15" />
-        <div className="container-custom relative z-10 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-serif text-white mb-4 sm:mb-6">
-            Send an Enquiry
-          </h1>
-          <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto px-4">
-            Have questions about our products? Fill out the form and we'll get
-            back to you shortly.
-          </p>
-        </div>
-      </section>
-
       {/* ---------- ENQUIRY FORM ---------- */}
       <section className="section-padding bg-background">
         <div className="container-custom max-w-2xl">

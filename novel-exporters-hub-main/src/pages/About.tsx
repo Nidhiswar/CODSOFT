@@ -6,14 +6,22 @@ import airExportImg from "@/assets/air-export.jpg";
 import airExportV2 from "@/assets/air-export-v2.png";
 import novelPackImg from "@/assets/novel-pack.jpg";
 import packedimage from "@/assets/packed.png";
-import ap_1 from "@/assets/ap-1.png";
+import freightOperations from "@/assets/ap-1.png";
 
 function About() {
   return (
     <div className="overflow-hidden bg-background text-foreground">
       {/* Hero Section */}
       <section className="relative py-16 sm:py-20 md:py-24 lg:py-32 bg-zinc-950 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center opacity-15" />
+        <div 
+          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center"
+          style={{ 
+            opacity: 0.6,
+            filter: 'brightness(1.1) contrast(1.1) saturate(1.15)'
+          }} 
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30" />
         <div className="container-custom relative z-10 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold font-serif text-white mb-4 sm:mb-6 animate-fade-in tracking-tight">
             About Novel Exporters
@@ -138,7 +146,7 @@ function About() {
             <div className="relative group order-2 lg:order-1">
               <div className="rounded-[2.5rem] overflow-hidden shadow-2xl relative h-[500px]">
                 <img
-                  src={ap_1}
+                  src={freightOperations}
                   alt="Logistics Prowess - Aircraft Loading Operations"
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 />

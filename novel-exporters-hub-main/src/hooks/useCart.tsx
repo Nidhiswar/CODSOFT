@@ -17,7 +17,7 @@ interface CartContextType {
     updateQuantity: (productId: string, quantity: number) => void;
     updateUnit: (productId: string, unit: WeightUnit) => void;
     totalItems: number;
-    requestQuote: (deliveryNote?: string, deliveryDate?: string) => Promise<void>;
+    requestQuote: (deliveryNote?: string, deliveryDate?: string, deliveryLocation?: string) => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -70,7 +70,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const updateQuantity = (productId: string, quantity: number) => {
         setCart(prev => prev.map(item =>
-            item.id === productId ? { ...item, quantity: Math.max(0.1, quantity) } : item
+            item.id === productId ? { ...item, quantity: Math.max(1, quantity) } : item
         ));
     };
 
@@ -87,9 +87,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const totalItems = cart.length;
 
-    const requestQuote = async (deliveryNote?: string, deliveryDate?: string) => {
+    const requestQuote = async (deliveryNote?: string, deliveryDate?: string, deliveryLocation?: string) => {
         const token = localStorage.getItem('token');
         if (!token) throw new Error("Login required");
+
+        // Validate all quantities are at least 1
+        const invalidItems = cart.filter(item => item.quantity < 1);
+        if (invalidItems.length > 0) {
+            throw new Error("All products must have a quantity of at least 1");
+        }
 
         await api.createOrder({
             products: cart.map(item => ({
@@ -99,7 +105,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 unit: item.unit
             })),
             delivery_request: deliveryNote,
-            requested_delivery_date: deliveryDate
+            requested_delivery_date: deliveryDate,
+            delivery_location: deliveryLocation
         });
 
         clearCart();

@@ -18,11 +18,40 @@ const OrderSchema = new mongoose.Schema({
     total_amount: Number, // Sum of all product total_prices + shipping_charges
     status: { type: String, enum: ["pending", "quoted", "confirmed", "shipped", "approved", "rejected"], default: "pending" },
     delivery_request: String,
+    delivery_location: String, // City/Country for delivery
     requested_delivery_date: Date,
     estimated_delivery_date: Date,
     delivery_reminder_sent: { type: Boolean, default: false },
     admin_notes: String,
     price_updated_at: Date, // Track when prices were last updated
+    // Modification history - tracks when user modifies products
+    modification_history: [{
+        modified_at: { type: Date, default: Date.now },
+        previous_products: [{
+            name: String,
+            quantity: Number,
+            unit: String
+        }],
+        new_products: [{
+            name: String,
+            quantity: Number,
+            unit: String
+        }]
+    }],
+    // Price update history - tracks when admin updates prices
+    price_update_history: [{
+        updated_at: { type: Date, default: Date.now },
+        total_amount: Number,
+        currency: String,
+        shipping_charges: Number,
+        products: [{
+            name: String,
+            quantity: Number,
+            unit: String,
+            unit_price: Number
+        }],
+        notes: String
+    }],
     createdAt: { type: Date, default: Date.now },
 });
 

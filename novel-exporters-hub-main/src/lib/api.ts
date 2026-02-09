@@ -142,11 +142,11 @@ export const api = {
         return res.json();
     },
 
-    updateOrderPricing: async (orderId: string, products: any[], currency: string, notes?: string, shippingCharges?: number) => {
+    updateOrderPricing: async (orderId: string, products: any[], currency: string, notes?: string, shippingCharges?: number, deliveryLocation?: string) => {
         const res = await fetch(`${API_BASE_URL}/orders/${orderId}/pricing`, {
             method: "PUT",
             headers: getHeaders(),
-            body: JSON.stringify({ products, currency, notes, shippingCharges }),
+            body: JSON.stringify({ products, currency, notes, shippingCharges, deliveryLocation }),
         });
         return res.json();
     },

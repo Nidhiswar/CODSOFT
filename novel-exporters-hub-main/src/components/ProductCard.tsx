@@ -51,7 +51,7 @@ const ProductCard = ({ product, index = 0, onClick, className, user }: ProductCa
     <motion.div
       layoutId={`card-container-${product.id}`}
       onClick={() => onClick && onClick(product)}
-      className={`group relative overflow-hidden rounded-xl sm:rounded-2xl md:rounded-[2rem] bg-white/5 dark:bg-black/20 backdrop-blur-xl shadow-2xl border border-white/10 cursor-pointer h-full flex flex-col ${className}`}
+      className={`group relative overflow-hidden rounded-xl sm:rounded-2xl md:rounded-[2rem] bg-white dark:bg-zinc-900 shadow-2xl border border-zinc-200 dark:border-zinc-800 cursor-pointer h-full flex flex-col ${className}`}
       initial={{ opacity: 0, scale: 0.85, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -138,23 +138,23 @@ const ProductCard = ({ product, index = 0, onClick, className, user }: ProductCa
       <div className="p-4 sm:p-5 md:p-6 flex flex-col flex-grow relative">
         <motion.h3
           layoutId={`product-title-${product.id}`}
-          className="text-base sm:text-lg md:text-xl font-bold font-serif text-foreground mb-1 group-hover:text-primary transition-colors"
+          className="text-base sm:text-lg md:text-xl font-bold font-serif text-zinc-900 dark:text-zinc-100 mb-1 group-hover:text-primary transition-colors"
         >
           {product.name}
         </motion.h3>
 
         <motion.p
           layoutId={`product-tamil-${product.id}`}
-          className="text-[10px] sm:text-xs font-semibold text-primary/80 italic mb-3 sm:mb-4"
+          className="text-[10px] sm:text-xs font-semibold text-primary italic mb-3 sm:mb-4"
         >
           {product.tamilName}
         </motion.p>
 
-        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-4 sm:mb-6">
+        <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed mb-4 sm:mb-6">
           {product.description}
         </p>
 
-        <div className="mt-auto pt-4 flex items-center justify-between border-t border-white/5">
+        <div className="mt-auto pt-4 flex items-center justify-between border-t border-zinc-200 dark:border-zinc-700">
           <motion.span
             className="text-xs font-bold text-spice-gold flex items-center gap-1.5 group-hover:translate-x-1 transition-transform"
           >
@@ -164,14 +164,14 @@ const ProductCard = ({ product, index = 0, onClick, className, user }: ProductCa
 
           <div className="flex -space-x-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="w-6 h-6 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm shadow-inner" />
+              <div key={i} className="w-6 h-6 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800" />
             ))}
           </div>
         </div>
       </div>
 
       {/* Decorative inner glow */}
-      <div className="absolute inset-0 rounded-[2rem] pointer-events-none border-2 border-transparent group-hover:border-spice-gold/30 transition-all duration-200 group-hover:shadow-[inset_0_0_30px_rgba(196,160,82,0.1)]" />
+      <div className="absolute inset-0 rounded-[2rem] pointer-events-none border-2 border-transparent group-hover:border-spice-gold/40 transition-all duration-200 group-hover:shadow-[inset_0_0_30px_rgba(196,160,82,0.15)]" />
     </motion.div>
   );
 };

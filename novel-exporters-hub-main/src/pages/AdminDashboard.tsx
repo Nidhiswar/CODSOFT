@@ -4,7 +4,7 @@ import {
     BarChart3, Calendar, Search,
     Filter, MoreHorizontal, CheckCircle2,
     Clock, AlertCircle, ShoppingCart, Download,
-    DollarSign, FileText, X
+    DollarSign, FileText, X, Pencil
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ const AdminDashboard = () => {
     const [orders, setOrders] = useState<any[]>([]);
     const [enquiries, setEnquiries] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "pending" | "confirmed" | "rejected">("all");
     const [users, setUsers] = useState<any[]>([]);
     const [analytics, setAnalytics] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +33,7 @@ const AdminDashboard = () => {
         productPrices: {[productIndex: number]: number}; 
         currency: string; 
         deliveryDate: string; 
+        deliveryLocation: string;
         notes: string;
         shippingCharges: number;
     }}>({});
@@ -157,7 +159,7 @@ const AdminDashboard = () => {
         const notes = `Total: ${symbol}${totalAmount.toLocaleString()} ${data.currency || 'INR'}${shippingNote} | Estimated Delivery: ${formattedDate} | Notes: ${data.notes || 'None'}`;
         
         // First update pricing (including shipping charges)
-        await api.updateOrderPricing(orderId, products, data.currency || 'INR', data.notes, data.shippingCharges || 0);
+        await api.updateOrderPricing(orderId, products, data.currency || 'INR', data.notes, data.shippingCharges || 0, data.deliveryLocation);
         
         // Then update status
         await updateStatus(orderId, status, notes, data.deliveryDate);
@@ -185,7 +187,7 @@ const AdminDashboard = () => {
                 return { unit_price: unitPrice };
             });
 
-            await api.updateOrderPricing(orderId, products, data.currency || order.currency || 'INR', data.notes, data.shippingCharges || 0);
+            await api.updateOrderPricing(orderId, products, data.currency || order.currency || 'INR', data.notes, data.shippingCharges || 0, data.deliveryLocation);
             toast.success("Prices updated successfully & user notified via email");
             setEditingPrices(null);
             setPricingData(prev => {
@@ -219,6 +221,7 @@ const AdminDashboard = () => {
                 productPrices,
                 currency: order.currency || 'INR',
                 deliveryDate: order.estimated_delivery_date ? new Date(order.estimated_delivery_date).toISOString().split('T')[0] : '',
+                deliveryLocation: order.delivery_location || '',
                 notes: '',
                 shippingCharges: order.shipping_charges || 0
             }
@@ -238,6 +241,7 @@ const AdminDashboard = () => {
                 productPrices,
                 currency: order.currency || 'INR',
                 deliveryDate: order.estimated_delivery_date ? new Date(order.estimated_delivery_date).toISOString().split('T')[0] : '',
+                deliveryLocation: order.delivery_location || '',
                 notes: '',
                 shippingCharges: order.shipping_charges || 0
             }
@@ -696,20 +700,28 @@ const AdminDashboard = () => {
                                             Recent Activity
                                         </h3>
                                         <div className="space-y-4">
-                                            {orders.slice(0, 5).map((order) => (
-                                                <div key={order._id} className="p-4 rounded-2xl bg-muted/30 border border-border flex items-center justify-between">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-10 h-10 rounded-xl bg-spice-gold/20 flex items-center justify-center text-spice-gold">
-                                                            <Package className="w-5 h-5" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-bold text-sm text-foreground">New Quote Request</p>
-                                                            <p className="text-xs text-muted-foreground">From {order.user?.username || 'Unknown'}</p>
-                                                        </div>
-                                                    </div>
-                                                    <span className="text-[10px] text-muted-foreground font-medium uppercase">{new Date(order.createdAt).toLocaleDateString()}</span>
+                                            {orders.length === 0 ? (
+                                                <div className="p-8 rounded-2xl bg-muted/30 border border-border text-center">
+                                                    <Package className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                                                    <p className="text-sm font-medium text-muted-foreground">No orders yet</p>
+                                                    <p className="text-xs text-muted-foreground/70 mt-1">Quote requests will appear here</p>
                                                 </div>
-                                            ))}
+                                            ) : (
+                                                orders.slice(0, 5).map((order) => (
+                                                    <div key={order._id} className="p-4 rounded-2xl bg-muted/30 border border-border flex items-center justify-between">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-10 h-10 rounded-xl bg-spice-gold/20 flex items-center justify-center text-spice-gold">
+                                                                <Package className="w-5 h-5" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-bold text-sm text-foreground">New Quote Request</p>
+                                                                <p className="text-xs text-muted-foreground">From {order.user?.username || 'Unknown'}</p>
+                                                            </div>
+                                                        </div>
+                                                        <span className="text-[10px] text-muted-foreground font-medium uppercase">{new Date(order.createdAt).toLocaleDateString()}</span>
+                                                    </div>
+                                                ))
+                                            )}
                                         </div>
                                     </div>
 
@@ -719,27 +731,37 @@ const AdminDashboard = () => {
                                             Market Intelligence
                                         </h3>
                                         <div className="p-6 rounded-3xl bg-indigo-500/5 border border-indigo-500/10 h-64 flex flex-col justify-center">
-                                            <p className="text-sm text-muted-foreground mb-4">Total product-level interest across all carts and orders:</p>
-                                            <div className="space-y-4 overflow-y-auto max-h-40 pr-2 custom-scrollbar">
-                                                {analytics?.productStats && (() => {
-                                                    const entries = Object.entries(analytics.productStats).sort((a: any, b: any) => b[1] - a[1]);
-                                                    const maxQty = entries.length > 0 ? Math.max(...entries.map(([, qty]: any) => qty)) : 1;
-                                                    return entries.map(([name, qty]: any) => (
-                                                        <div key={name} className="space-y-1">
-                                                            <div className="flex justify-between text-xs font-bold">
-                                                                <span>{name}</span>
-                                                                <span>{qty >= 1000 ? `${(qty / 1000).toFixed(1)} kg` : `${qty} g`}</span>
-                                                            </div>
-                                                            <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                                                                <div
-                                                                    className="bg-indigo-500 h-full rounded-full transition-all duration-1000"
-                                                                    style={{ width: `${(qty / maxQty) * 100}%` }}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    ));
-                                                })()}
-                                            </div>
+                                            {analytics?.productStats && Object.keys(analytics.productStats).length > 0 ? (
+                                                <>
+                                                    <p className="text-sm text-muted-foreground mb-4">Total product-level interest across all carts and orders:</p>
+                                                    <div className="space-y-4 overflow-y-auto max-h-40 pr-2 custom-scrollbar">
+                                                        {(() => {
+                                                            const entries = Object.entries(analytics.productStats).sort((a: any, b: any) => b[1] - a[1]);
+                                                            const maxQty = entries.length > 0 ? Math.max(...entries.map(([, qty]: any) => qty)) : 1;
+                                                            return entries.map(([name, qty]: any) => (
+                                                                <div key={name} className="space-y-1">
+                                                                    <div className="flex justify-between text-xs font-bold">
+                                                                        <span>{name}</span>
+                                                                        <span>{qty >= 1000 ? `${(qty / 1000).toFixed(1)} kg` : `${qty} g`}</span>
+                                                                    </div>
+                                                                    <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                                                                        <div
+                                                                            className="bg-indigo-500 h-full rounded-full transition-all duration-1000"
+                                                                            style={{ width: `${(qty / maxQty) * 100}%` }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            ));
+                                                        })()}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="text-center">
+                                                    <BarChart3 className="w-12 h-12 text-indigo-500/30 mx-auto mb-3" />
+                                                    <p className="text-sm font-medium text-muted-foreground">No product data yet</p>
+                                                    <p className="text-xs text-muted-foreground/70 mt-1">Product interest analytics will appear here</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -748,50 +770,99 @@ const AdminDashboard = () => {
 
                         {activeTab === "orders" && (
                             <motion.div key="ord" className="p-8 h-full">
-                                <div className="flex items-center justify-between mb-8">
-                                    <h3 className="text-2xl font-bold font-serif">Manage Orders</h3>
-                                    <div className="flex items-center gap-4">
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                            <input 
-                                                className="pl-10 pr-4 py-2 rounded-xl bg-muted/50 border-none text-sm w-64" 
-                                                placeholder="Search orders..." 
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                            />
+                                <div className="flex flex-col gap-4 mb-8">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-2xl font-bold font-serif">Manage Orders</h3>
+                                        <div className="flex items-center gap-4">
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                <input 
+                                                    className="pl-10 pr-4 py-2 rounded-xl bg-muted/50 border-none text-sm w-64" 
+                                                    placeholder="Search orders..." 
+                                                    value={searchQuery}
+                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                />
+                                            </div>
+                                            <Button 
+                                                variant="warm" 
+                                                onClick={downloadOrdersPDF} 
+                                                disabled={isDownloading}
+                                                className="rounded-xl text-xs shadow-lg shadow-primary/20 disabled:opacity-70"
+                                            >
+                                                {isDownloading ? (
+                                                    <><span className="w-3 h-3 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</>
+                                                ) : (
+                                                    <><Download className="w-4 h-4 mr-1" /> Export PDF</>
+                                                )}
+                                            </Button>
                                         </div>
-                                        <Button 
-                                            variant="warm" 
-                                            onClick={downloadOrdersPDF} 
-                                            disabled={isDownloading}
-                                            className="rounded-xl text-xs shadow-lg shadow-primary/20 disabled:opacity-70"
-                                        >
-                                            {isDownloading ? (
-                                                <><span className="w-3 h-3 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</>
-                                            ) : (
-                                                <><Download className="w-4 h-4 mr-1" /> Export PDF</>
-                                            )}
-                                        </Button>
+                                    </div>
+                                    {/* Status Filter Tabs */}
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm text-muted-foreground mr-2">Filter:</span>
+                                        {[
+                                            { key: "all", label: "All Orders", count: orders.length },
+                                            { key: "pending", label: "Pending", count: orders.filter(o => o.status === "pending").length },
+                                            { key: "confirmed", label: "Confirmed", count: orders.filter(o => o.status === "confirmed").length },
+                                            { key: "rejected", label: "Rejected", count: orders.filter(o => o.status === "rejected").length }
+                                        ].map((filter) => (
+                                            <button
+                                                key={filter.key}
+                                                onClick={() => setOrderStatusFilter(filter.key as any)}
+                                                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                                                    orderStatusFilter === filter.key
+                                                        ? filter.key === "pending" ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30"
+                                                        : filter.key === "confirmed" ? "bg-green-500 text-white shadow-lg shadow-green-500/30"
+                                                        : filter.key === "rejected" ? "bg-red-500 text-white shadow-lg shadow-red-500/30"
+                                                        : "bg-primary text-white shadow-lg shadow-primary/30"
+                                                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                                                }`}
+                                            >
+                                                {filter.label} ({filter.count})
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
-                                    {orders.filter((order) => {
-                                        if (!searchQuery.trim()) return true;
-                                        const query = searchQuery.toLowerCase();
-                                        const orderId = order._id?.toLowerCase() || '';
-                                        const customerName = order.user?.username?.toLowerCase() || '';
-                                        const customerEmail = order.user?.email?.toLowerCase() || '';
-                                        const customerPhone = order.user?.phone?.toLowerCase() || '';
-                                        const productNames = order.products?.map((p: any) => p.name?.toLowerCase()).join(' ') || '';
-                                        const status = order.status?.toLowerCase() || '';
-                                        return orderId.includes(query) || 
-                                               customerName.includes(query) || 
-                                               customerEmail.includes(query) || 
-                                               customerPhone.includes(query) || 
-                                               productNames.includes(query) ||
-                                               status.includes(query);
-                                    }).map((order) => (
+                                    {(() => {
+                                        const filteredOrders = orders.filter((order) => {
+                                            // Status filter
+                                            if (orderStatusFilter !== "all" && order.status !== orderStatusFilter) return false;
+                                            // Search filter
+                                            if (!searchQuery.trim()) return true;
+                                            const query = searchQuery.toLowerCase();
+                                            const orderId = order._id?.toLowerCase() || '';
+                                            const customerName = order.user?.username?.toLowerCase() || '';
+                                            const customerEmail = order.user?.email?.toLowerCase() || '';
+                                            const customerPhone = order.user?.phone?.toLowerCase() || '';
+                                            const productNames = order.products?.map((p: any) => p.name?.toLowerCase()).join(' ') || '';
+                                            const status = order.status?.toLowerCase() || '';
+                                            return orderId.includes(query) || 
+                                                   customerName.includes(query) || 
+                                                   customerEmail.includes(query) || 
+                                                   customerPhone.includes(query) || 
+                                                   productNames.includes(query) ||
+                                                   status.includes(query);
+                                        });
+                                        
+                                        if (filteredOrders.length === 0) {
+                                            return (
+                                                <div className="py-20 text-center">
+                                                    <Package className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
+                                                    <h3 className="text-xl font-bold text-muted-foreground mb-2">
+                                                        {orders.length === 0 ? 'No orders yet' : 'No matching orders'}
+                                                    </h3>
+                                                    <p className="text-sm text-muted-foreground/70">
+                                                        {orders.length === 0 
+                                                            ? 'When customers place orders, they will appear here for you to manage.' 
+                                                            : 'Try adjusting your search or filter criteria.'}
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+                                        
+                                        return filteredOrders.map((order) => (
                                         <div key={order._id} className="p-6 rounded-2xl bg-muted/20 border border-border hover:border-primary/20 transition-all">
                                             {/* Order Header */}
                                             <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
@@ -816,31 +887,37 @@ const AdminDashboard = () => {
                                             </div>
 
                                             {/* Customer & Order Info */}
-                                            <div className="grid md:grid-cols-3 gap-6 mb-6">
-                                                <div className="space-y-2">
-                                                    <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Customer</h4>
-                                                    <p className="font-semibold text-foreground">{order.user?.username || 'N/A'}</p>
-                                                    <p className="text-sm text-muted-foreground">{order.user?.email}</p>
-                                                    <p className="text-sm text-primary font-medium">{order.user?.phone || 'No phone'}</p>
+                                            <div className="grid md:grid-cols-4 gap-4 mb-6">
+                                                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+                                                    <h4 className="text-[10px] font-bold uppercase text-slate-500 tracking-wider mb-2">Customer</h4>
+                                                    <p className="font-bold text-foreground text-sm">{order.user?.username || 'N/A'}</p>
+                                                    <p className="text-xs text-muted-foreground truncate">{order.user?.email}</p>
+                                                    <p className="text-xs text-primary font-medium mt-1">{order.user?.phone || 'No phone'}</p>
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Products</h4>
-                                                    <div className="flex flex-wrap gap-1">
+                                                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+                                                    <h4 className="text-[10px] font-bold uppercase text-slate-500 tracking-wider mb-2">Products ({order.products.length})</h4>
+                                                    <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
                                                         {order.products.map((p: any, i: number) => (
-                                                            <span key={i} className="px-2 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-xs font-medium">
-                                                                {p.name} ({p.quantity} {p.unit || 'kg'})
+                                                            <span key={i} className="px-2 py-0.5 rounded bg-white dark:bg-zinc-800 text-[10px] font-medium border border-slate-200 dark:border-slate-700">
+                                                                {p.name} <span className="text-primary">×{p.quantity}{p.unit || 'kg'}</span>
                                                             </span>
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Special Instructions</h4>
-                                                    <p className="text-sm text-foreground/80 italic">
-                                                        {order.delivery_request || 'No special instructions'}
+                                                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+                                                    <h4 className="text-[10px] font-bold uppercase text-slate-500 tracking-wider mb-2">Delivery Location</h4>
+                                                    <p className="text-sm font-medium text-foreground">
+                                                        {order.delivery_location || <span className="text-muted-foreground italic">Not specified</span>}
                                                     </p>
                                                     {order.requested_delivery_date && (
-                                                        <p className="text-xs text-spice-gold font-bold">📅 Requested: {new Date(order.requested_delivery_date).toLocaleDateString()}</p>
+                                                        <p className="text-[10px] text-spice-gold font-bold mt-2">📅 Requested: {new Date(order.requested_delivery_date).toLocaleDateString()}</p>
                                                     )}
+                                                </div>
+                                                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+                                                    <h4 className="text-[10px] font-bold uppercase text-slate-500 tracking-wider mb-2">Instructions</h4>
+                                                    <p className="text-xs text-foreground/80 italic line-clamp-3">
+                                                        {order.delivery_request || 'No special instructions'}
+                                                    </p>
                                                 </div>
                                             </div>
 
@@ -852,6 +929,125 @@ const AdminDashboard = () => {
                                                 </div>
                                             )}
 
+                                            {/* History Sections - Two Column Layout */}
+                                            {((order.modification_history && order.modification_history.length > 0) || (order.price_update_history && order.price_update_history.length > 0)) && (
+                                                <div className="grid lg:grid-cols-2 gap-4 mb-4">
+                                                    {/* User Modification History - Left Column */}
+                                                    <div className="rounded-xl border border-orange-200 dark:border-orange-800/50 overflow-hidden bg-gradient-to-br from-orange-50/50 to-amber-50/30 dark:from-orange-950/20 dark:to-amber-950/10">
+                                                        <div className="px-4 py-2.5 bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-900/40 dark:to-amber-900/30 border-b border-orange-200 dark:border-orange-800/50">
+                                                            <div className="flex items-center justify-between">
+                                                                <p className="text-xs font-bold text-orange-700 dark:text-orange-400 flex items-center gap-2">
+                                                                    <FileText className="w-3.5 h-3.5" /> User Modifications
+                                                                </p>
+                                                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-orange-200 dark:bg-orange-800/50 text-orange-700 dark:text-orange-300">
+                                                                    {order.modification_history?.length || 0} changes
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="max-h-64 overflow-y-auto">
+                                                            {order.modification_history && order.modification_history.length > 0 ? (
+                                                                order.modification_history.slice().reverse().map((mod: any, idx: number) => (
+                                                                    <div key={idx} className="px-4 py-3 border-b border-orange-100 dark:border-orange-900/30 last:border-b-0 hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition-colors">
+                                                                        <div className="flex items-center gap-2 mb-2">
+                                                                            {idx === 0 && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-orange-500 text-white">Latest</span>}
+                                                                            <span className="text-[10px] text-muted-foreground">
+                                                                                {new Date(mod.modified_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })} • {new Date(mod.modified_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="space-y-2">
+                                                                            <div className="flex items-start gap-2">
+                                                                                <span className="text-[9px] font-bold text-red-500 uppercase mt-0.5 w-12 flex-shrink-0">Before</span>
+                                                                                <div className="flex flex-wrap gap-1">
+                                                                                    {mod.previous_products?.map((p: any, i: number) => (
+                                                                                        <span key={i} className="px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-[10px] font-medium">
+                                                                                            {p.name} ×{p.quantity}
+                                                                                        </span>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="flex items-start gap-2">
+                                                                                <span className="text-[9px] font-bold text-green-500 uppercase mt-0.5 w-12 flex-shrink-0">After</span>
+                                                                                <div className="flex flex-wrap gap-1">
+                                                                                    {mod.new_products?.map((p: any, i: number) => (
+                                                                                        <span key={i} className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-medium">
+                                                                                            {p.name} ×{p.quantity}
+                                                                                        </span>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))
+                                                            ) : (
+                                                                <div className="px-4 py-6 text-center text-xs text-muted-foreground">
+                                                                    No modifications yet
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Price Update History - Right Column */}
+                                                    <div className="rounded-xl border border-purple-200 dark:border-purple-800/50 overflow-hidden bg-gradient-to-br from-purple-50/50 to-indigo-50/30 dark:from-purple-950/20 dark:to-indigo-950/10">
+                                                        <div className="px-4 py-2.5 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/40 dark:to-indigo-900/30 border-b border-purple-200 dark:border-purple-800/50">
+                                                            <div className="flex items-center justify-between">
+                                                                <p className="text-xs font-bold text-purple-700 dark:text-purple-400 flex items-center gap-2">
+                                                                    <Clock className="w-3.5 h-3.5" /> Price Updates
+                                                                </p>
+                                                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-200 dark:bg-purple-800/50 text-purple-700 dark:text-purple-300">
+                                                                    {order.price_update_history?.length || 0} updates
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="max-h-64 overflow-y-auto">
+                                                            {order.price_update_history && order.price_update_history.length > 0 ? (
+                                                                order.price_update_history.slice().reverse().map((update: any, idx: number) => {
+                                                                    const currencySymbols: {[key: string]: string} = {
+                                                                        'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'د.إ',
+                                                                        'SAR': '﷼', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'JPY': '¥'
+                                                                    };
+                                                                    const symbol = currencySymbols[update.currency] || '';
+                                                                    const isLatest = idx === 0;
+                                                                    return (
+                                                                        <div key={idx} className={`px-4 py-3 border-b border-purple-100 dark:border-purple-900/30 last:border-b-0 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 transition-colors ${isLatest ? 'bg-white/50 dark:bg-white/5' : ''}`}>
+                                                                            <div className="flex items-center justify-between gap-2 mb-2">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    {isLatest && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-500 text-white">Latest</span>}
+                                                                                    <span className="text-[10px] text-muted-foreground">
+                                                                                        {new Date(update.updated_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })} • {new Date(update.updated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <span className="text-sm font-bold text-purple-700 dark:text-purple-300 whitespace-nowrap">
+                                                                                    {symbol}{update.total_amount?.toLocaleString()}
+                                                                                </span>
+                                                                            </div>
+                                                                            <div className="flex flex-wrap gap-1">
+                                                                                {update.products?.map((p: any, i: number) => (
+                                                                                    <span key={i} className="px-1.5 py-0.5 rounded bg-white/80 dark:bg-black/20 text-[10px] font-medium border border-purple-200/50 dark:border-purple-700/30">
+                                                                                        {p.name}: <span className="text-purple-600 dark:text-purple-400">{symbol}{p.unit_price?.toLocaleString()}/{p.unit}</span>
+                                                                                    </span>
+                                                                                ))}
+                                                                                {update.shipping_charges > 0 && (
+                                                                                    <span className="px-1.5 py-0.5 rounded bg-amber-100/80 dark:bg-amber-900/30 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                                                                                        🚚 {symbol}{update.shipping_charges?.toLocaleString()}
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            {update.notes && (
+                                                                                <p className="text-[10px] text-muted-foreground italic mt-2 pl-2 border-l-2 border-purple-300 dark:border-purple-700">"{update.notes}"</p>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                })
+                                                            ) : (
+                                                                <div className="px-4 py-6 text-center text-xs text-muted-foreground">
+                                                                    No price updates yet
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             {/* Pricing & Timeline Section */}
                                             {editingOrder === order._id ? (
                                                 <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 mb-4">
@@ -860,8 +1056,8 @@ const AdminDashboard = () => {
                                                         <h4 className="font-bold text-blue-700 dark:text-blue-400">Set Individual Product Prices</h4>
                                                     </div>
                                                     
-                                                    {/* Currency and Delivery Date Row */}
-                                                    <div className="grid md:grid-cols-3 gap-4 mb-4">
+                                                    {/* Currency, Delivery Location, and Delivery Date Row */}
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                                                         <div>
                                                             <label className="text-xs font-bold text-muted-foreground mb-1 block">Currency</label>
                                                             <select
@@ -870,14 +1066,14 @@ const AdminDashboard = () => {
                                                                     ...prev,
                                                                     [order._id]: { ...prev[order._id], currency: e.target.value }
                                                                 }))}
-                                                                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                                                className="w-full h-10 px-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                                             >
                                                                 <option value="INR">₹ INR</option>
                                                                 <option value="USD">$ USD</option>
                                                                 <option value="EUR">€ EUR</option>
                                                                 <option value="GBP">£ GBP</option>
-                                                                <option value="AED">د.إ AED</option>
-                                                                <option value="SAR">﷼ SAR</option>
+                                                                <option value="AED">AED</option>
+                                                                <option value="SAR">SAR</option>
                                                                 <option value="AUD">A$ AUD</option>
                                                                 <option value="CAD">C$ CAD</option>
                                                                 <option value="SGD">S$ SGD</option>
@@ -885,7 +1081,19 @@ const AdminDashboard = () => {
                                                             </select>
                                                         </div>
                                                         <div>
-                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Estimated Delivery Date</label>
+                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Delivery Location</label>
+                                                            <Input
+                                                                placeholder="City, Country"
+                                                                value={pricingData[order._id]?.deliveryLocation || order.delivery_location || ''}
+                                                                onChange={(e) => setPricingData(prev => ({
+                                                                    ...prev,
+                                                                    [order._id]: { ...prev[order._id], deliveryLocation: e.target.value }
+                                                                }))}
+                                                                className="h-10"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold text-muted-foreground mb-1 block">Estimated Delivery</label>
                                                             <input
                                                                 type="date"
                                                                 min={new Date().toISOString().split('T')[0]}
@@ -896,7 +1104,7 @@ const AdminDashboard = () => {
                                                                 }))}
                                                                 className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                                             />
-                                                            <p className="text-[10px] text-muted-foreground mt-1">⚠️ Reminder email sent 1 day before</p>
+                                                            <p className="text-[10px] text-muted-foreground mt-1">⚠️ Reminder 1 day before</p>
                                                         </div>
                                                         <div>
                                                             <label className="text-xs font-bold text-muted-foreground mb-1 block">Additional Notes</label>
@@ -1271,6 +1479,15 @@ const AdminDashboard = () => {
                                                 </Button>
                                                 <Button
                                                     size="sm"
+                                                    variant="outline"
+                                                    onClick={() => startEditingPrices(order)}
+                                                    disabled={processingOrders.has(order._id) || order.status !== 'confirmed'}
+                                                    className="rounded-lg text-xs h-8 text-blue-600 border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20 disabled:opacity-50"
+                                                >
+                                                    <Pencil className="w-3 h-3 mr-1" /> Update
+                                                </Button>
+                                                <Button
+                                                    size="sm"
                                                     variant={order.status === 'rejected' ? 'default' : 'outline'}
                                                     onClick={() => updateStatus(order._id, 'rejected')}
                                                     disabled={processingOrders.has(order._id)}
@@ -1280,7 +1497,8 @@ const AdminDashboard = () => {
                                                 </Button>
                                             </div>
                                         </div>
-                                    ))}
+                                    ));
+                                    })()}
                                 </div>
                             </motion.div>
                         )}

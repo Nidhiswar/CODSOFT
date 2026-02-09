@@ -13,7 +13,6 @@ const getNavLinks = (isAdmin: boolean) => {
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
     { name: "Contact Us", path: "/contact" },
-    { name: "Enquiry", path: "/enquiry" },
   ];
   
   if (isAdmin) {
@@ -27,7 +26,6 @@ const getNavLinks = (isAdmin: boolean) => {
     { name: "About", path: "/about" },
     { name: "Products", path: "/products" },
     { name: "Contact Us", path: "/contact" },
-    { name: "Enquiry", path: "/enquiry" },
   ];
 };
 
@@ -203,28 +201,46 @@ const Header = ({ user, onLogout }: HeaderProps) => {
                                 <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
                                 <div className="flex items-center gap-1.5 mt-1">
                                   <button
-                                    onClick={() => updateQuantity(item.id, Math.max(0.1, item.quantity - 1))}
+                                    onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
                                     className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
                                   >
                                     <Minus className="w-3 h-3" />
                                   </button>
-                                  <span className="text-xs font-bold min-w-[28px] text-center">
-                                    {item.quantity}
-                                  </span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={item.quantity}
+                                    onChange={(e) => updateQuantity(item.id, Math.max(0, parseFloat(e.target.value) || 0))}
+                                    className="w-10 h-6 text-center text-xs font-bold bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-600 rounded-md focus:ring-1 ring-spice-gold/50 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
                                   <button
                                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
                                     className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
                                   >
                                     <Plus className="w-3 h-3" />
                                   </button>
-                                  <select
-                                    value={item.unit || 'kg'}
-                                    onChange={(e) => updateUnit(item.id, e.target.value as 'kg' | 'g')}
-                                    className="h-6 px-1.5 text-[10px] font-bold bg-spice-gold text-black border-0 rounded-md cursor-pointer shadow-sm hover:bg-spice-gold/90 transition-colors"
-                                  >
-                                    <option value="kg">kg</option>
-                                    <option value="g">g</option>
-                                  </select>
+                                  <div className="flex h-6 bg-zinc-100 dark:bg-zinc-700 rounded-lg p-0.5 ml-1">
+                                    <button
+                                      onClick={() => updateUnit(item.id, 'kg')}
+                                      className={`px-2 text-[10px] font-bold rounded-md transition-all duration-200 ${
+                                        (item.unit || 'kg') === 'kg'
+                                          ? 'bg-spice-gold text-black shadow-sm'
+                                          : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                                      }`}
+                                    >
+                                      kg
+                                    </button>
+                                    <button
+                                      onClick={() => updateUnit(item.id, 'g')}
+                                      className={`px-2 text-[10px] font-bold rounded-md transition-all duration-200 ${
+                                        item.unit === 'g'
+                                          ? 'bg-spice-gold text-black shadow-sm'
+                                          : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                                      }`}
+                                    >
+                                      g
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                               <button

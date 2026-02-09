@@ -58,10 +58,10 @@ const Login = ({ onLogin }: LoginProps) => {
         // Check if admin email - redirect to admin dashboard
         const isAdmin = res.user.role === 'admin' && res.user.email === 'novelexporters@gmail.com';
         if (isAdmin) {
-          toast.success(`Welcome Admin, ${res.user.username}!`);
+          toast.success(`Welcome Admin !`);
           navigate("/admin");
         } else {
-          toast.success(isLogin ? `Welcome back, ${res.user.username}!` : "Account created successfully! Explore our products.");
+          toast.success(isLogin ? `Welcome ${res.user.username || res.user.email.split('@')[0]} !` : "Account created successfully! Explore our products.");
           navigate("/");
         }
       } else {

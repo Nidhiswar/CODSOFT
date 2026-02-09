@@ -4,8 +4,10 @@ import ProductCard from "@/components/ProductCard";
 import { products } from "@/data/products";
 import { ArrowRight, Leaf, Globe, Award, Truck } from "lucide-react";
 import Certifications from "@/components/Certifications";
+import { useAuth } from "@/hooks/useAuth";
 
 const Home = () => {
+  const { user } = useAuth();
   const curry = products.find(p => p.id === 'curry-leaves');
   const pepper = products.find(p => p.id === 'pepper');
   const cardamom = products.find(p => p.id === 'cardamom');
@@ -17,12 +19,12 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center"
           style={{ 
-            opacity: 0.35,
-            filter: 'brightness(1.1) contrast(1.15) saturate(1.1)'
+            opacity: 0.6,
+            filter: 'brightness(1.1) contrast(1.1) saturate(1.15)'
           }} 
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30" />
 
         <div className="container-custom relative z-10 py-12 sm:py-16 md:py-20">
           <div className="max-w-2xl space-y-4 sm:space-y-6 animate-fade-in">
@@ -42,20 +44,6 @@ const Home = () => {
               Novel Exporters delivers authentic, handpicked spices straight from the heart of
               Coimbatore. Experience the rich heritage of South Indian spices.
             </p>
-
-            <div className="flex flex-wrap gap-4 pt-4">
-              <Link to="/products">
-                <Button variant="warm" size="xl">
-                  Explore Products
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-              <Link to="/enquiry">
-                <Button variant="outline" size="xl" className="border-white/30 text-white hover:bg-white/10">
-                  Get Quote
-                </Button>
-              </Link>
-            </div>
           </div>
         </div>
       </section>
@@ -103,7 +91,7 @@ const Home = () => {
                 From the aromatic curry leaves of Coimbatore to the premium cardamom from the Western Ghats,
                 each product tells a story of tradition, purity, and excellence.
               </p>
-              <Link to="/about">
+              <Link to="/about" className="inline-block mt-2">
                 <Button variant="default" size="lg">
                   Learn More About Us
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -146,7 +134,7 @@ const Home = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.slice(0, 4).map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
+              <ProductCard key={product.id} product={product} index={index} user={user} />
             ))}
           </div>
 
