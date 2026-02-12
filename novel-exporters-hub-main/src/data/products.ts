@@ -8,6 +8,7 @@ export interface Product {
   origin: string;
   harvestTiming: string;
   certifications: string[];
+  isCustomRequest?: boolean;
 }
 
 export const products: Product[] = [
@@ -131,6 +132,18 @@ export const products: Product[] = [
     origin: "Kerala",
     harvestTiming: "October - December",
     certifications: ["FSSAI", "Ethically Sourced", "Organic Practices"],
+  },
+  {
+    id: "custom-product-request",
+    name: "Custom Product on Request",
+    tamilName: "தனிப்பயன் உற்பத்தி (Thanippayan Urpathi)",
+    description: "If the product you require is not listed on our website, we can source and export it based on your specifications with quality assurance.",
+    image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80",
+    category: "EXPORT",
+    origin: "India",
+    harvestTiming: "On Demand",
+    certifications: ["Custom Sourcing", "Quality Assured", "Export Ready"],
+    isCustomRequest: true,
   },
 ];
 

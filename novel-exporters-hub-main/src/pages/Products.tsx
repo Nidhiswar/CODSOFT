@@ -9,7 +9,7 @@ import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
-const categories = ["All", "Leaves", "Seeds", "Bark", "Flowers"];
+const categories = ["All", "Leaves", "Seeds", "Bark", "Flowers", "EXPORT"];
 
 const Products = ({ user }: { user: any }) => {
   const navigate = useNavigate();

@@ -7,7 +7,8 @@ import airExportV2 from "@/assets/air-export-v2.png";
 import novelPackImg from "@/assets/novel-pack.jpg";
 import packedimage from "@/assets/packed.png";
 import freightOperations from "@/assets/ap-1.png";
-
+import airglobal from "@/assets/air-global.png";
+import ablocal from "@/assets/ab-local.png";
 function About() {
   return (
     <div className="overflow-hidden bg-background text-foreground">
@@ -39,7 +40,7 @@ function About() {
             <div className="relative group">
               <div className="aspect-square rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white/10 relative">
                 <img
-                  src={ourStoryImg}
+                  src={ablocal}
                   alt="Authentic Spices Collection"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
@@ -146,7 +147,7 @@ function About() {
             <div className="relative group order-2 lg:order-1">
               <div className="rounded-[2.5rem] overflow-hidden shadow-2xl relative h-[500px]">
                 <img
-                  src={freightOperations}
+                  src={airglobal}
                   alt="Logistics Prowess - Aircraft Loading Operations"
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 />

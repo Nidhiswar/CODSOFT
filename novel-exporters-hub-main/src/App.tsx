@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -203,11 +204,19 @@ const App = () => {
           isAdmin: updatedUser.role === 'admin' && updatedUser.email === 'novelexporters@gmail.com',
           showConsentOverlay: false // Hide overlay after consent
         });
-        // Redirect to home page after successful consent for exploring & ordering products
-        window.location.href = "/";
+        toast.success("Welcome! You can now explore products and place orders.");
+        // Redirect to user account page for ordering & exploring products
+        window.location.href = "/profile";
+      } else if (updatedUser && updatedUser.message) {
+        toast.error(updatedUser.message || "Failed to accept consent");
+      } else {
+        // Fallback: hide overlay and redirect even if response format is unexpected
+        setUser(prev => prev ? { ...prev, showConsentOverlay: false } : null);
+        window.location.href = "/profile";
       }
     } catch (err) {
       console.error("Failed to record consent:", err);
+      toast.error("Failed to record consent. Please try again.");
     }
   };
 

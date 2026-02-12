@@ -13,7 +13,9 @@ export const api = {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(userData),
         });
-        return res.json();
+        const data = await res.json();
+        if (data.token) localStorage.setItem("token", data.token);
+        return data;
     },
 
     login: async (credentials: any) => {
