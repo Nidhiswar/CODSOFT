@@ -18,6 +18,7 @@ const Products = ({ user }: { user: any }) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [customProductName, setCustomProductName] = useState("");
 
   const filteredProducts = products.filter((p) => {
     const matchesCategory = activeCategory === "All" || p.category === activeCategory;
@@ -142,7 +143,7 @@ const Products = ({ user }: { user: any }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              onClick={() => setSelectedProduct(null)}
+              onClick={() => { setSelectedProduct(null); setCustomProductName(""); }}
               className="fixed inset-0 bg-zinc-950/85 backdrop-blur-xl z-[100]"
             />
 
@@ -205,7 +206,7 @@ const Products = ({ user }: { user: any }) => {
                       </motion.p>
                     </div>
                     <button
-                      onClick={() => setSelectedProduct(null)}
+                      onClick={() => { setSelectedProduct(null); setCustomProductName(""); }}
                       className="p-3 rounded-2xl bg-zinc-100 dark:bg-white/10 hover:bg-spice-gold/20 hover:scale-110 active:scale-95 transition-all duration-150 group"
                     >
                       <X className="w-6 h-6 text-foreground group-hover:rotate-90 group-hover:text-spice-gold transition-all duration-150" />
@@ -264,6 +265,28 @@ const Products = ({ user }: { user: any }) => {
                     </div>
                   </div>
 
+                  {/* Custom Product Name Input */}
+                  {selectedProduct?.isCustomRequest && (
+                    <div className="mt-8 mb-4">
+                      <label className="text-[10px] uppercase font-black tracking-widest text-zinc-500 dark:text-zinc-400 mb-3 block">
+                        Enter Your Product Name
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Type the product you need (e.g., Turmeric Powder, Fennel Seeds)"
+                        value={customProductName}
+                        onChange={(e) => setCustomProductName(e.target.value)}
+                        className="w-full py-4 px-4 rounded-xl border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-spice-gold focus:border-transparent text-base"
+                      />
+                      {customProductName.trim() && (
+                        <p className="text-sm text-primary mt-2 flex items-center gap-2">
+                          <Check className="w-4 h-4" />
+                          Your custom product: <span className="font-bold">{customProductName.trim()}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Add to Cart Button */}
                   <div className="mt-8">
                     {!user ? (
@@ -278,7 +301,20 @@ const Products = ({ user }: { user: any }) => {
                         <LogIn className="w-5 h-5 mr-2" />
                         Login to Order Products
                       </Button>
-                    ) : cart.find(item => item.id === selectedProduct.id) ? (
+                    ) : selectedProduct?.isCustomRequest && customProductName.trim() && cart.find(item => item.id === `custom-${customProductName.trim().toLowerCase().replace(/\s+/g, '-')}`) ? (
+                      <Button
+                        variant="outline"
+                        className="w-full py-4 text-lg font-bold tracking-wide border-spice-gold text-spice-gold hover:bg-spice-gold/10"
+                        onClick={() => {
+                          setSelectedProduct(null);
+                          setCustomProductName("");
+                          navigate('/profile');
+                        }}
+                      >
+                        <Check className="w-5 h-5 mr-2" />
+                        Already in Cart - View Cart
+                      </Button>
+                    ) : cart.find(item => item.id === selectedProduct.id) && !selectedProduct?.isCustomRequest ? (
                       <Button
                         variant="outline"
                         className="w-full py-4 text-lg font-bold tracking-wide border-spice-gold text-spice-gold hover:bg-spice-gold/10"
@@ -289,6 +325,39 @@ const Products = ({ user }: { user: any }) => {
                       >
                         <Check className="w-5 h-5 mr-2" />
                         Already in Cart - View Cart
+                      </Button>
+                    ) : selectedProduct?.isCustomRequest ? (
+                      <Button
+                        variant="default"
+                        className={`w-full py-4 text-lg font-bold tracking-wide transition-all duration-300 ${isAddedToCart ? 'bg-green-600 hover:bg-green-600' : ''} ${!customProductName.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={!customProductName.trim()}
+                        onClick={() => {
+                          if (selectedProduct && customProductName.trim()) {
+                            const customProduct: Product = {
+                              ...selectedProduct,
+                              id: `custom-${customProductName.trim().toLowerCase().replace(/\s+/g, '-')}`,
+                              name: customProductName.trim(),
+                              tamilName: "Custom Request Product",
+                              isCustomRequest: true,
+                            };
+                            addToCart(customProduct);
+                            setIsAddedToCart(true);
+                            toast.success(`Added "${customProductName.trim()}" to cart`);
+                            setTimeout(() => {
+                              setIsAddedToCart(false);
+                              setCustomProductName("");
+                            }, 2000);
+                          }
+                        }}
+                      >
+                        {isAddedToCart ? (
+                          <>
+                            <Check className="w-5 h-5 mr-2" />
+                            Added to Cart
+                          </>
+                        ) : (
+                          customProductName.trim() ? `Add "${customProductName.trim()}" to Cart` : 'Enter Product Name to Add'
+                        )}
                       </Button>
                     ) : (
                       <Button

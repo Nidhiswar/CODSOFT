@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/hooks/useCart";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
   product: Product;
@@ -94,15 +94,17 @@ const ProductCard = ({ product, index = 0, onClick, className, user }: ProductCa
 
         {/* Floating Add to Cart Button or Request Button for custom product */}
         {product.isCustomRequest ? (
-          <Link
-            to="/contact"
-            onClick={(e) => e.stopPropagation()}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick && onClick(product);
+            }}
             className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl sm:rounded-2xl flex items-center gap-2 shadow-2xl transition-all duration-150 hover:scale-110 active:scale-90 bg-primary text-white font-bold text-xs sm:text-sm"
-            title="Request a Product"
+            title="Type Your Product"
           >
             <MessageSquare className="w-4 h-4" />
-            <span className="hidden sm:inline">Request</span>
-          </Link>
+            <span className="hidden sm:inline">Custom</span>
+          </button>
         ) : (
           <button
             onClick={handleAddToCart}
@@ -168,14 +170,16 @@ const ProductCard = ({ product, index = 0, onClick, className, user }: ProductCa
 
         <div className="mt-auto pt-4 flex items-center justify-between border-t border-zinc-200 dark:border-zinc-700">
           {product.isCustomRequest ? (
-            <Link
-              to="/contact"
-              onClick={(e) => e.stopPropagation()}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick && onClick(product);
+              }}
               className="text-xs font-bold text-primary flex items-center gap-1.5 group-hover:translate-x-1 transition-transform hover:underline"
             >
-              Request a Product
+              Type Your Product
               <MessageSquare className="w-3.5 h-3.5" />
-            </Link>
+            </button>
           ) : (
             <motion.span
               className="text-xs font-bold text-spice-gold flex items-center gap-1.5 group-hover:translate-x-1 transition-transform"
