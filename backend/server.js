@@ -1,7 +1,9 @@
-require("dotenv").config();
+const config = require('./config');
 const express = require("express");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
+const hpp = require("hpp");
+const rateLimit = require("express-rate-limit");
 const nodemailer = require("nodemailer");
 const cors = require("cors");
 const dns = require("dns");
@@ -19,35 +21,48 @@ const { startDeliveryReminderScheduler, triggerDeliveryReminders } = require("./
 
 const app = express();
 
+
+// 1. Set Security HTTP Headers
+app.use(helmet());
+
+// 2. Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 100,
+  message: 'Too many requests from this IP, please try again in an hour!'
+});
+app.use('/api', limiter);
+
+// 3. Data Sanitization against NoSQL Query Injection
+app.use(mongoSanitize());
+
+// 4. Prevent Parameter Pollution
+app.use(hpp());
+
+// 5. Secure CORS
+app.use(cors({
+    origin: [config.clientUrl, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+    credentials: true
+}));
+
+app.use(express.json({ limit: '10kb' })); // Body parser, reading data from body into req.body
+
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI;
 console.log("🔍 Attempting to connect to MongoDB...");
 
-
-if (!MONGODB_URI) {
-  console.error("❌ MONGODB_URI is not defined in .env file");
-}
-
-console.log("Mongo URI loaded:", !!process.env.MONGODB_URI);
-
-
-mongoose.connect(MONGODB_URI, {
+mongoose.connect(config.mongoUri, {
   serverSelectionTimeoutMS: 5000,
   family: 4,
 })
 .then(() => {
   console.log("🚀 MongoDB Integrated Successfully");
-
+  
   // Start the delivery reminder scheduler
   startDeliveryReminderScheduler();
-
-  app.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
-  });
 })
 .catch(err => {
   console.error("❌ MongoDB Connection Error:", err.message);
-  process.exit(1); // 🔴 STOP the server
+  process.exit(1);
 });
 
 mongoose.connection.on("error", err => {
@@ -57,12 +72,6 @@ mongoose.connection.on("error", err => {
 mongoose.connection.on("disconnected", () => {
   console.warn("⚠️ MongoDB disconnected");
 });
-
-
-app.use(cors());
-app.use(helmet());
-app.use(express.json());
-app.use(mongoSanitize());
 
 // Health Check / Integration Route
 app.get("/", (req, res) => {
@@ -508,7 +517,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5009;
+const PORT = config.port;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Novel Exporters Backend Active: http://127.0.0.1:${PORT}`);
   console.log(`📂 API Gateway: http://127.0.0.1:${PORT}/api`);

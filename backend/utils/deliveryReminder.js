@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const nodemailer = require('nodemailer');
 const Order = require('../models/Order');
 const User = require('../models/User');
+const config = require('../config');
 const { getEmailHeader, getEmailFooter, getLogoAttachment } = require('./emailTemplate');
 
 // Email transporter configuration
@@ -9,8 +10,8 @@ const createTransporter = () => {
     return nodemailer.createTransport({
         service: "gmail",
         auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
+            user: config.emailUser,
+            pass: config.emailPass,
         },
     });
 };

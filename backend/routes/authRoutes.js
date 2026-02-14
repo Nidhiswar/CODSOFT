@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/User");
 const { auth, admin } = require("../middleware/auth");
+const config = require("../config");
 const nodemailer = require("nodemailer");
 const { generateOrderHistoryPDF } = require("../utils/pdfFormatter");
 const { getEmailHeader, getEmailFooter, getLogoAttachment } = require("../utils/emailTemplate");
@@ -12,8 +13,8 @@ const router = express.Router();
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: config.emailUser,
+        pass: config.emailPass,
     },
 });
 
@@ -33,7 +34,7 @@ router.post("/register", async (req, res) => {
         user = new User({ username, email, phone, password: hashedPassword, role, hasConsented: false, isFirstLogin: true });
         await user.save();
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({ id: user._id }, config.jwtSecret, { expiresIn: "7d" });
         // On registration, show consent overlay for non-admin users
         const showConsentOverlay = role !== "admin";
         res.json({ token, user: { id: user._id, username, email, role: user.role, cart: user.cart, hasConsented: false, isFirstLogin: true, showConsentOverlay } });
@@ -63,7 +64,7 @@ router.post("/login", async (req, res) => {
         // Never show consent overlay on login - only during registration
         const showConsentOverlay = false;
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({ id: user._id }, config.jwtSecret, { expiresIn: "7d" });
         res.json({ token, user: { id: user._id, username: user.username, email: user.email, role: user.role, cart: user.cart, hasConsented: user.hasConsented, isFirstLogin: user.isFirstLogin, showConsentOverlay } });
     } catch (err) {
         res.status(500).json({ message: "Server error" });
@@ -82,10 +83,10 @@ router.post("/forgot-password", async (req, res) => {
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
         await user.save();
 
-        const resetUrl = `http://localhost:5173/reset-password/${token}`;
+        const resetUrl = `${config.clientUrl}/reset-password/${token}`;
 
         await transporter.sendMail({
-            from: `"Novel Exporters Security" <${process.env.EMAIL_USER}>`,
+            from: `"Novel Exporters Security" <${config.emailUser}>`,
             to: user.email,
             subject: "Password Reset Request – Novel Exporters",
             attachments: getLogoAttachment(),
