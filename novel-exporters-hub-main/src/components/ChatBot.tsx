@@ -73,7 +73,7 @@ const ChatBot = () => {
             } else if (error.message.includes("Unexpected token") || error.message.includes("invalid response")) {
                 userFriendlyMessage = "Integration Error: The backend returned an invalid response. Please stop all processes and run 'START_INTEGRATED_APP.bat'.";
             } else if (error.message === "Failed to fetch") {
-                userFriendlyMessage = "Connection Error: Backend server not reachable at http://127.0.0.1:5009. Please ensure 'node server.js' is running.";
+                userFriendlyMessage = `Connection Error: Unable to reach the backend server. Please check your internet connection.`;
             }
 
             const errorMessage: Message = {
