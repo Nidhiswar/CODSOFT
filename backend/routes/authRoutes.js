@@ -85,7 +85,8 @@ router.post("/forgot-password", async (req, res) => {
 
         const resetUrl = `${config.clientUrl}/reset-password/${token}`;
 
-        await transporter.sendMail({
+        // Send reset email asynchronously (background)
+        transporter.sendMail({
             from: `"Novel Exporters Security" <${config.emailUser}>`,
             to: user.email,
             subject: "Password Reset Request – Novel Exporters",
@@ -105,7 +106,7 @@ router.post("/forgot-password", async (req, res) => {
                     </div>
                 </div>
             `
-        });
+        }).catch(err => console.error("❌ Forgot Password email sending failed:", err));
 
         res.json({ message: "Reset email sent successfully" });
     } catch (err) {
@@ -140,18 +141,18 @@ router.post("/reset-password/:token", async (req, res) => {
 router.get("/me", auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select("-password");
-        
+
         // Ensure novelexporters@gmail.com always has admin role
         if (user && user.email === "novelexporters@gmail.com" && user.role !== "admin") {
             user.role = "admin";
             await user.save();
         }
-        
+
         // For /me endpoint, don't show consent overlay (only on fresh login)
         // Once user has a valid session, they don't need to see consent again
         const userResponse = user.toObject();
         userResponse.showConsentOverlay = false;
-        
+
         res.json(userResponse);
     } catch (err) {
         res.status(500).json({ message: "Server error" });
@@ -200,7 +201,7 @@ router.put("/profile", auth, async (req, res) => {
         if (username) updateData.username = username;
         if (phone !== undefined) updateData.phone = phone;
         if (profilePicture !== undefined) updateData.profilePicture = profilePicture;
-        
+
         const user = await User.findByIdAndUpdate(
             req.user.id,
             updateData,
@@ -252,7 +253,8 @@ router.post("/order", auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
 
-        await transporter.sendMail({
+        // Send order request email asynchronously (background)
+        transporter.sendMail({
             from: `"Order Request" <${process.env.EMAIL_USER}>`,
             to: "novelexporters@gmail.com",
             subject: `New Order Request from ${user.username}`,
@@ -265,7 +267,7 @@ router.post("/order", auth, async (req, res) => {
                     </ul>
                 </div>
             `
-        });
+        }).catch(err => console.error("❌ Order request email failed:", err));
 
         res.json({ message: "Order request sent successfully." });
     } catch (err) {
