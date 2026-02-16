@@ -22,7 +22,9 @@ const { startDeliveryReminderScheduler, triggerDeliveryReminders } = require("./
 const app = express();
 
 
+
 // 1. Set Security HTTP Headers
+app.set('trust proxy', 1); // Trust first proxy (Railway/Netlify)
 app.use(helmet());
 
 // 2. Rate Limiting
