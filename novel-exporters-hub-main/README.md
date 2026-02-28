@@ -4,7 +4,7 @@
 
 This is the official web platform for Novel Exporters, a premium spices export company based in Tamil Nadu, India.
 
-**Website**: Novel Exporters Hub
+**Website**: Novel Exporters 
 
 ## Features
 
