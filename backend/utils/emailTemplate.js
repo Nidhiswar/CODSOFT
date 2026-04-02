@@ -4,13 +4,14 @@ const path = require('path');
 // Logo path for attachment
 const logoPath = path.join(__dirname, '..', 'Novel-Exporters-logo.png');
 const logoExists = fs.existsSync(logoPath);
+const logoBase64 = logoExists ? fs.readFileSync(logoPath).toString('base64') : null;
 
 // Email header with CID image reference (for inline attachment)
 const getEmailHeader = () => {
-    if (logoExists) {
+    if (logoExists && logoBase64) {
         return `
             <div style="text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid #228B22;">
-                <img src="cid:novelexporterslogo" alt="Novel Exporters" style="max-width: 180px; height: auto;" />
+                <img src="data:image/png;base64,${logoBase64}" alt="Novel Exporters" style="display: inline-block; margin: 0 auto; max-width: 180px; height: auto;" />
             </div>
         `;
     }
@@ -41,13 +42,7 @@ const getEmailFooter = () => {
 
 // Get logo attachment for nodemailer
 const getLogoAttachment = () => {
-    if (logoExists) {
-        return [{
-            filename: 'novel-exporters-logo.png',
-            path: logoPath,
-            cid: 'novelexporterslogo' // Same as the cid used in img src
-        }];
-    }
+    // Inline base64 image is used in the header, so no file attachment is needed.
     return [];
 };
 

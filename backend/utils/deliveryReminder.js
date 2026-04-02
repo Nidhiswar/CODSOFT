@@ -1,20 +1,7 @@
 const cron = require('node-cron');
-const nodemailer = require('nodemailer');
+const transporter = require('./mailTransporter');
 const Order = require('../models/Order');
-const User = require('../models/User');
-const config = require('../config');
 const { getEmailHeader, getEmailFooter, getLogoAttachment } = require('./emailTemplate');
-
-// Email transporter configuration
-const createTransporter = () => {
-    return nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            user: config.emailUser,
-            pass: config.emailPass,
-        },
-    });
-};
 
 const ADMIN_EMAIL = "novelexporters@gmail.com";
 
@@ -234,7 +221,6 @@ const checkAndSendDeliveryReminders = async () => {
     console.log('🔍 Checking for tomorrow\'s deliveries...');
     
     try {
-        const transporter = createTransporter();
         const orders = await getOrdersWithDeliveryTomorrow();
 
         if (orders.length === 0) {

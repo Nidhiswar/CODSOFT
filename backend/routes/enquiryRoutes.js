@@ -1,19 +1,11 @@
 const express = require("express");
 const Enquiry = require("../models/Enquiry");
-const nodemailer = require("nodemailer");
+const transporter = require("../utils/mailTransporter");
 const jwt = require("jsonwebtoken");
 const { auth, admin } = require("../middleware/auth");
 const pdfkit = require("pdfkit");
 const { getEmailHeader, getEmailFooter, getLogoAttachment } = require("../utils/emailTemplate");
 const router = express.Router();
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
 // Admin view all enquiries
 router.get("/all", auth, admin, async (req, res) => {

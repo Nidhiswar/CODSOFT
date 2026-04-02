@@ -5,18 +5,10 @@ const crypto = require("crypto");
 const User = require("../models/User");
 const { auth, admin } = require("../middleware/auth");
 const config = require("../config");
-const nodemailer = require("nodemailer");
+const transporter = require("../utils/mailTransporter");
 const { generateOrderHistoryPDF } = require("../utils/pdfFormatter");
 const { getEmailHeader, getEmailFooter, getLogoAttachment } = require("../utils/emailTemplate");
 const router = express.Router();
-
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: config.emailUser,
-        pass: config.emailPass,
-    },
-});
 
 // Register
 router.post("/register", async (req, res) => {

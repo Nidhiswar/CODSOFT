@@ -2,20 +2,12 @@ const express = require("express");
 const Order = require("../models/Order");
 const User = require("../models/User");
 const { auth, admin } = require("../middleware/auth");
-const nodemailer = require("nodemailer");
+const transporter = require("../utils/mailTransporter");
 const PDFDocument = require("pdfkit");
 const path = require("path");
 const fs = require("fs");
 const { getEmailHeader, getEmailFooter, getLogoAttachment } = require("../utils/emailTemplate");
 const router = express.Router();
-
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
 
 const ADMIN_EMAIL = "novelexporters@gmail.com";
 
