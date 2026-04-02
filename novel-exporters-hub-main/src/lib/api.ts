@@ -57,6 +57,15 @@ export const api = {
         return res.json();
     },
 
+    cancelOrder: async (orderId: string, reason?: string) => {
+        const res = await fetch(`${API_BASE_URL}/orders/my-orders/${orderId}/cancel`, {
+            method: "PUT",
+            headers: getHeaders(),
+            body: JSON.stringify({ reason }),
+        });
+        return res.json();
+    },
+
     recordConsent: async (consentData: any) => {
         const res = await fetch(`${API_BASE_URL}/auth/consent`, {
             method: "POST",

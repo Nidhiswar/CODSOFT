@@ -38,6 +38,11 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
   const [editingProducts, setEditingProducts] = useState<any[]>([]);
   const [isModifyingOrder, setIsModifyingOrder] = useState(false);
   
+  // Order cancellation state
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [isCancellingOrder, setIsCancellingOrder] = useState(false);
+  
   // Ref for scrolling to history section
   const historyRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +67,8 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
     const pending = orders.filter(o => o.status === 'pending').length;
     const confirmed = orders.filter(o => o.status === 'confirmed').length;
     const quoted = orders.filter(o => o.status === 'quoted').length;
-    return { pending, confirmed, quoted, total: orders.length };
+    const cancelled = orders.filter(o => o.status === 'cancelled').length;
+    return { pending, confirmed, quoted, cancelled, total: orders.length };
   };
 
   const orderStats = getOrderStats();
@@ -155,6 +161,26 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
       toast.error("Failed to modify order");
     } finally {
       setIsModifyingOrder(false);
+    }
+  };
+
+  // Order cancellation handler
+  const handleCancelOrder = async (orderId: string) => {
+    setIsCancellingOrder(true);
+    try {
+      const result = await api.cancelOrder(orderId, cancelReason);
+      if (result.success) {
+        toast.success(result.message || "Order cancelled successfully");
+        setCancellingOrderId(null);
+        setCancelReason("");
+        fetchOrders(); // Refresh orders
+      } else {
+        toast.error(result.message || "Failed to cancel order");
+      }
+    } catch (err) {
+      toast.error("Failed to cancel order");
+    } finally {
+      setIsCancellingOrder(false);
     }
   };
 
@@ -683,7 +709,7 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
 
                 {/* Order Statistics */}
                 {orders.length > 0 && (
-                  <div className="grid grid-cols-3 gap-3 mb-6">
+                  <div className="grid grid-cols-4 gap-3 mb-6">
                     <div className="p-3 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 border border-amber-200/50 dark:border-amber-800/30">
                       <div className="flex items-center gap-2 mb-1">
                         <Timer className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
@@ -704,6 +730,13 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
                         <span className="text-[10px] font-medium text-green-700 dark:text-green-400">Confirmed</span>
                       </div>
                       <span className="text-xl font-black text-green-700 dark:text-green-400">{orderStats.confirmed}</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/30 dark:to-red-900/20 border border-red-200/50 dark:border-red-800/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <XCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+                        <span className="text-[10px] font-medium text-red-700 dark:text-red-400">Cancelled</span>
+                      </div>
+                      <span className="text-xl font-black text-red-700 dark:text-red-400">{orderStats.cancelled}</span>
                     </div>
                   </div>
                 )}
@@ -741,13 +774,15 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
                               order.status === 'quoted' ? 'bg-blue-100 dark:bg-blue-900/30' :
                               order.status === 'confirmed' ? 'bg-green-100 dark:bg-green-900/30' :
                               order.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/30' :
+                              order.status === 'cancelled' ? 'bg-red-100 dark:bg-red-900/30' :
                               'bg-gray-100 dark:bg-gray-900/30'
                             }`}>
                               {order.status === 'pending' && <Timer className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
                               {order.status === 'quoted' && <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
                               {order.status === 'confirmed' && <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />}
                               {order.status === 'rejected' && <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />}
-                              {!['pending', 'quoted', 'confirmed', 'rejected'].includes(order.status) && <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />}
+                              {order.status === 'cancelled' && <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />}
+                              {!['pending', 'quoted', 'confirmed', 'rejected', 'cancelled'].includes(order.status) && <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />}
                             </div>
                             <div>
                               <p className="text-[10px] text-muted-foreground">#{order._id.slice(-8).toUpperCase()}</p>
@@ -760,6 +795,7 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
                               order.status === 'quoted' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                               order.status === 'confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                               order.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                              order.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                               'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
                             }`}>
                               {order.status}
@@ -912,6 +948,77 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
                                       Cancel
                                     </Button>
                                   </div>
+                                </div>
+                              )}
+
+                              {/* Cancel Order Option - for pending and quoted orders */}
+                              {['pending', 'quoted'].includes(order.status) && cancellingOrderId !== order._id && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setCancellingOrderId(order._id); }}
+                                  className="flex items-center gap-2 text-xs text-red-600 hover:text-red-700 font-medium hover:underline"
+                                >
+                                  <XCircle className="w-3 h-3" />
+                                  Cancel this order
+                                </button>
+                              )}
+
+                              {/* Cancellation Confirmation */}
+                              {cancellingOrderId === order._id && (
+                                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800" onClick={(e) => e.stopPropagation()}>
+                                  <h4 className="text-xs font-bold text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
+                                    <XCircle className="w-4 h-4" />
+                                    Cancel Order
+                                  </h4>
+                                  <p className="text-xs text-red-600 dark:text-red-400 mb-3">
+                                    Are you sure you want to cancel this order? This action cannot be undone.
+                                  </p>
+                                  <Input
+                                    placeholder="Reason for cancellation (optional)"
+                                    value={cancelReason}
+                                    onChange={(e) => setCancelReason(e.target.value)}
+                                    className="mb-3 text-xs"
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => handleCancelOrder(order._id)}
+                                      disabled={isCancellingOrder}
+                                      className="rounded-lg text-xs"
+                                    >
+                                      <XCircle className="w-3 h-3 mr-1" />
+                                      {isCancellingOrder ? "Cancelling..." : "Confirm Cancel"}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => { setCancellingOrderId(null); setCancelReason(""); }}
+                                      className="rounded-lg text-xs"
+                                    >
+                                      <X className="w-3 h-3 mr-1" />
+                                      Keep Order
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Cancelled Order Info */}
+                              {order.status === 'cancelled' && (
+                                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                                  <h4 className="text-xs font-bold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
+                                    <XCircle className="w-4 h-4" />
+                                    Order Cancelled
+                                  </h4>
+                                  {order.cancelled_at && (
+                                    <p className="text-xs text-red-600 dark:text-red-400 mb-1">
+                                      Cancelled on: {new Date(order.cancelled_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    </p>
+                                  )}
+                                  {order.cancellation_reason && (
+                                    <p className="text-xs text-red-600 dark:text-red-400">
+                                      Reason: {order.cancellation_reason}
+                                    </p>
+                                  )}
                                 </div>
                               )}
 

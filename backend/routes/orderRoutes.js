@@ -509,6 +509,112 @@ router.put("/my-orders/:id/modify", auth, async (req, res) => {
     }
 });
 
+// Cancel Order (User can only cancel pending or quoted orders)
+router.put("/my-orders/:id/cancel", auth, async (req, res) => {
+    const { reason } = req.body;
+    try {
+        const order = await Order.findOne({ _id: req.params.id, user: req.user.id });
+
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        // Only allow cancellation of pending or quoted orders
+        if (!["pending", "quoted"].includes(order.status)) {
+            return res.status(400).json({ message: "Can only cancel pending or quoted orders. Please contact support for confirmed orders." });
+        }
+
+        const user = await User.findById(req.user.id);
+
+        // Update order status to cancelled
+        order.status = "cancelled";
+        order.cancelled_at = new Date();
+        order.cancellation_reason = reason || "Not specified";
+        await order.save();
+
+        // Send emails asynchronously (background)
+        Promise.all([
+            // Notify admin about the cancellation
+            transporter.sendMail({
+                from: `"Order Cancellation" <${process.env.EMAIL_USER}>`,
+                to: ADMIN_EMAIL,
+                subject: `ORDER CANCELLED: ${user.username} - #${order._id.toString().slice(-8).toUpperCase()}`,
+                attachments: getLogoAttachment(),
+                html: `
+                    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                        <div style="padding: 30px;">
+                            ${getEmailHeader()}
+                            <h2 style="color: #dc2626; margin-top: 0;">⚠️ Order Cancelled</h2>
+                            <p><b>Customer:</b> ${user.username} (${user.email})</p>
+                            <p><b>Phone:</b> ${user.phone || "Not provided"}</p>
+                            <p><b>Order ID:</b> #${order._id.toString().slice(-8).toUpperCase()}</p>
+                            <p><b>Cancelled At:</b> ${new Date().toLocaleString()}</p>
+                            <p><b>Reason:</b> ${reason || "Not specified"}</p>
+                            
+                            <h4>Cancelled Products:</h4>
+                            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                                <thead>
+                                    <tr style="background: #ef4444;">
+                                        <th style="padding: 12px; border: 1px solid #ddd; color: white;">Product</th>
+                                        <th style="padding: 12px; border: 1px solid #ddd; color: white;">Quantity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${order.products.map(p => `
+                                        <tr>
+                                            <td style="padding: 10px; border: 1px solid #ddd;">${p.name}</td>
+                                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${p.quantity} ${p.unit || 'kg'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            ${getEmailFooter()}
+                        </div>
+                    </div>
+                `
+            }),
+
+            // Notify user about the cancellation confirmation
+            transporter.sendMail({
+                from: `"Novel Exporters" <${process.env.EMAIL_USER}>`,
+                to: user.email,
+                subject: `Order Cancelled – #${order._id.toString().slice(-8).toUpperCase()}`,
+                attachments: getLogoAttachment(),
+                html: `
+                    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                        <div style="padding: 30px;">
+                            ${getEmailHeader()}
+                            <h3 style="color: #0f172a; margin-top: 0;">Hello ${user.username},</h3>
+                            <p>Your order <strong>#${order._id.toString().slice(-8).toUpperCase()}</strong> has been successfully cancelled.</p>
+                            
+                            <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #ef4444;">
+                                <h4 style="margin-top: 0; color: #991b1b;">Cancelled Items:</h4>
+                                <ul style="padding-left: 20px; margin: 10px 0;">
+                                    ${order.products.map(p => `<li>${p.name} - ${p.quantity} ${p.unit || 'kg'}</li>`).join('')}
+                                </ul>
+                                ${reason ? `<p style="color: #991b1b; margin-top: 15px;"><strong>Reason:</strong> ${reason}</p>` : ''}
+                            </div>
+
+                            <p>If you have any questions or wish to place a new order, please feel free to contact us.</p>
+                            <p>We hope to serve you again soon!</p>
+                            ${getEmailFooter()}
+                        </div>
+                    </div>
+                `
+            })
+        ]).catch(err => console.error("❌ Email sending failed (order cancellation):", err));
+
+        res.json({
+            success: true,
+            message: "Order cancelled successfully.",
+            order
+        });
+    } catch (err) {
+        console.error("❌ Error cancelling order:", err);
+        res.status(500).json({ message: "Failed to cancel order" });
+    }
+});
+
 // ADMIN: Get All Orders
 router.get("/all", auth, admin, async (req, res) => {
     try {

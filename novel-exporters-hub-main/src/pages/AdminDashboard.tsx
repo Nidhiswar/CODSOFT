@@ -20,7 +20,7 @@ const AdminDashboard = () => {
     const [orders, setOrders] = useState<any[]>([]);
     const [enquiries, setEnquiries] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
-    const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "pending" | "confirmed" | "rejected">("all");
+    const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "pending" | "confirmed" | "rejected" | "cancelled">("all");
     const [users, setUsers] = useState<any[]>([]);
     const [analytics, setAnalytics] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -804,7 +804,8 @@ const AdminDashboard = () => {
                                             { key: "all", label: "All Orders", count: orders.length },
                                             { key: "pending", label: "Pending", count: orders.filter(o => o.status === "pending").length },
                                             { key: "confirmed", label: "Confirmed", count: orders.filter(o => o.status === "confirmed").length },
-                                            { key: "rejected", label: "Rejected", count: orders.filter(o => o.status === "rejected").length }
+                                            { key: "rejected", label: "Rejected", count: orders.filter(o => o.status === "rejected").length },
+                                            { key: "cancelled", label: "Cancelled", count: orders.filter(o => o.status === "cancelled").length }
                                         ].map((filter) => (
                                             <button
                                                 key={filter.key}
@@ -814,6 +815,7 @@ const AdminDashboard = () => {
                                                         ? filter.key === "pending" ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30"
                                                         : filter.key === "confirmed" ? "bg-green-500 text-white shadow-lg shadow-green-500/30"
                                                         : filter.key === "rejected" ? "bg-red-500 text-white shadow-lg shadow-red-500/30"
+                                                        : filter.key === "cancelled" ? "bg-red-400 text-white shadow-lg shadow-red-400/30"
                                                         : "bg-primary text-white shadow-lg shadow-primary/30"
                                                         : "bg-muted/50 text-muted-foreground hover:bg-muted"
                                                 }`}
@@ -880,6 +882,7 @@ const AdminDashboard = () => {
                                                     order.status === 'approved' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                                                     order.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                                                     order.status === 'confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                    order.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                                                     'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
                                                 }`}>
                                                     {order.status}

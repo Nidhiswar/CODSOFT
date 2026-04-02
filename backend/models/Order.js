@@ -16,7 +16,9 @@ const OrderSchema = new mongoose.Schema({
     currency: { type: String, default: "INR" },
     shipping_charges: { type: Number, default: 0 }, // Shipping charges set by admin
     total_amount: Number, // Sum of all product total_prices + shipping_charges
-    status: { type: String, enum: ["pending", "quoted", "confirmed", "shipped", "approved", "rejected"], default: "pending" },
+    status: { type: String, enum: ["pending", "quoted", "confirmed", "shipped", "approved", "rejected", "cancelled"], default: "pending" },
+    cancelled_at: Date, // When the order was cancelled
+    cancellation_reason: String, // Optional reason for cancellation
     delivery_request: String,
     delivery_location: String, // City/Country for delivery
     requested_delivery_date: Date,
