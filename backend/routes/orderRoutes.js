@@ -8,6 +8,7 @@ const path = require("path");
 const fs = require("fs");
 const { getEmailHeader, getEmailFooter, getLogoAttachment } = require("../utils/emailTemplate");
 const router = express.Router();
+const FRONTEND_URL = process.env.CLIENT_URL || "https://your-frontend.onrender.com";
 
 const ADMIN_EMAIL = "novelexporters@gmail.com";
 
@@ -685,7 +686,7 @@ router.put("/:id/status", auth, admin, async (req, res) => {
                         ${admin_notes ? `<div style="background: #f1f5f9; padding: 15px; border-radius: 8px; border-left: 4px solid #228B22;"><p style="margin: 0;"><strong>Message from Export Desk:</strong></p><p style="margin: 5px 0 0 0;">${admin_notes}</p></div>` : ""}
                         <p style="margin-top: 25px;">Please login to your account to review the full details and next steps.</p>
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="http://localhost:5173/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
+                            <a href="${FRONTEND_URL}/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
                         </div>
                         ${getEmailFooter()}
                     </div>
@@ -717,7 +718,7 @@ router.put("/:id/status", auth, admin, async (req, res) => {
                         <p>Our logistics team will coordinate the delivery as per your requirements. You will receive tracking information once the shipment is dispatched.</p>
                         
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="http://localhost:5173/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">Track Your Order</a>
+                            <a href="${FRONTEND_URL}/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">Track Your Order</a>
                         </div>
                         ${getEmailFooter()}
                     </div>
@@ -775,7 +776,7 @@ router.put("/:id/status", auth, admin, async (req, res) => {
                         <p>Your order is now awaiting final confirmation. Our team will be in touch shortly with payment and delivery details.</p>
                         
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="http://localhost:5173/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
+                            <a href="${FRONTEND_URL}/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
                         </div>
                         ${getEmailFooter()}
                     </div>
@@ -989,7 +990,7 @@ router.put("/:id/pricing", auth, admin, async (req, res) => {
                         ${notes ? `<div style="background: #f1f5f9; padding: 15px; border-radius: 8px; border-left: 4px solid #228B22; margin: 20px 0;"><p style="margin: 0;"><strong>Message from Export Team:</strong></p><p style="margin: 5px 0 0 0;">${notes}</p></div>` : ""}
                         
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="http://localhost:5173/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
+                            <a href="${FRONTEND_URL}/login" style="background: #228B22; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
                         </div>
                         ${getEmailFooter()}
                     </div>

@@ -20,19 +20,19 @@ echo.
 
 echo Phase 3: Launching Integrated Suite...
 echo.
-echo [BACKEND] Starting on http://127.0.0.1:5009
+echo [BACKEND] Starting backend service on configured PORT
 start "Novel-Backend" /min cmd /k "cd backend && node server.js"
 
 timeout /t 3 /nobreak > nul
 
-echo [FRONTEND] Starting on http://127.0.0.1:8080
+echo [FRONTEND] Starting frontend service on configured Vite port
 start "Novel-Frontend" /min cmd /k "cd novel-exporters-hub-main && npm run dev"
 
 echo.
 echo ==================================================
 echo   ✅ SUCCESS: BOTH SERVICES ARE DEPLOYING
-echo   - Frontend: http://localhost:8080
-echo   - Backend Status: http://localhost:5009/api
+echo   - Frontend URL: check Vite console output
+echo   - Backend Status: /api endpoint is available on backend PORT
 echo ==================================================
 echo.
 pause

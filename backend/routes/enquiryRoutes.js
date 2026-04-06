@@ -6,6 +6,7 @@ const { auth, admin } = require("../middleware/auth");
 const pdfkit = require("pdfkit");
 const { getEmailHeader, getEmailFooter, getLogoAttachment } = require("../utils/emailTemplate");
 const router = express.Router();
+const FRONTEND_URL = process.env.CLIENT_URL || "https://your-frontend.onrender.com";
 
 // Admin view all enquiries
 router.get("/all", auth, admin, async (req, res) => {
@@ -88,7 +89,7 @@ router.post("/", async (req, res) => {
                  <p style="margin: 0;"><strong>Your Message:</strong></p>
                  <p style="font-style: italic; color: #64748b; margin: 10px 0 0 0;">"${message}"</p>
               </div>
-              <p>In the meantime, feel free to explore our <a href="http://localhost:5173/products" style="color: #228B22; text-decoration: none; font-weight: 600;">latest product catalog</a>.</p>
+              <p>In the meantime, feel free to explore our <a href="${FRONTEND_URL}/products" style="color: #228B22; text-decoration: none; font-weight: 600;">latest product catalog</a>.</p>
               ${getEmailFooter()}
             </div>
           </div>

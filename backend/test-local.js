@@ -1,5 +1,6 @@
 async function testLocalChat() {
-    const url = `http://127.0.0.1:5009/api/chat`;
+    const apiBase = (process.env.API_BASE_URL || "https://your-backend.onrender.com").replace(/\/$/, "");
+    const url = `${apiBase}/api/chat`;
     try {
         const res = await fetch(url, {
             method: "POST",

@@ -18,7 +18,7 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model('User', UserSchema);
 
 async function updateRoles() {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB');
     
     // Update specific users to 'user' role

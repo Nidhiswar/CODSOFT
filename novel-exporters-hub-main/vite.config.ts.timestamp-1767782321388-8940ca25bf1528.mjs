@@ -5,7 +5,7 @@ import path from "path";
 var __vite_injected_original_dirname = "F:\\novel_exports\\CODSOFT\\novel-exporters-hub-main";
 var vite_config_default = defineConfig({
   server: {
-    host: "localhost",
+    host: true,
     port: 5173,
     // Frontend port (safe & free)
     strictPort: true

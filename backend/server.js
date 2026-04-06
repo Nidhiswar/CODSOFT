@@ -43,13 +43,7 @@ app.use(hpp());
 
 // 5. Secure CORS
 app.use(cors({
-  origin: [
-    config.clientUrl,
-    'https://novelexporters.com',
-    'https://www.novelexporters.com',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173'
-  ],
+  origin: process.env.CLIENT_URL,
   credentials: true
 }));
 
@@ -58,7 +52,7 @@ app.use(express.json({ limit: '10kb' })); // Body parser, reading data from body
 // MongoDB Connection
 console.log("🔍 Attempting to connect to MongoDB...");
 
-mongoose.connect(config.mongoUri, {
+mongoose.connect(process.env.MONGO_URI, {
   serverSelectionTimeoutMS: 5000,
   family: 4,
 })
@@ -106,7 +100,7 @@ app.get("/api/health", (req, res) => {
     services: {
       mongodb: mongoConnected ? "Connected" : "Disconnected",
       googleAI: googleKeyConfigured ? "Configured" : "Missing GOOGLE_API_KEY",
-      ollama: "Check http://127.0.0.1:11434 manually",
+      ollama: "Check Ollama service manually",
       deliveryReminder: "Scheduler Active (9:00 AM IST daily)"
     },
     endpoints: {
@@ -525,10 +519,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = config.port;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Novel Exporters Backend Active: http://127.0.0.1:${PORT}`);
-  console.log(`📂 API Gateway: http://127.0.0.1:${PORT}/api`);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on ${PORT}`);
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.error(`❌ Port ${PORT} is already in use. Please kill the existing process or use a different port.`);

@@ -1,6 +1,6 @@
 # Novel Exporters API Documentation
 
-**Base URL**: `http://localhost:5000/api`
+**Base URL**: `${VITE_API_URL}/api`
 
 ---
 
@@ -56,4 +56,4 @@ All protected routes require the JWT token to be sent in the header:
 ### ⚠️ Common Errors
 *   **401 Unauthorized**: Missing or invalid token.
 *   **403 Forbidden**: Accessing admin routes with a standard user account.
-*   **500 MongoDB Connection**: Ensure your local MongoDB service is running at `mongodb://localhost:27017`.
+*   **500 MongoDB Connection**: Ensure `MONGO_URI` is correctly set in backend environment variables.

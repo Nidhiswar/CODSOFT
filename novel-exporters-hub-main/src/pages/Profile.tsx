@@ -207,7 +207,8 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
         return;
       }
 
-      const response = await fetch(`http://127.0.0.1:5009/api/orders/my-orders/pdf`, {
+      const API = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+      const response = await fetch(`${API}/api/orders/my-orders/pdf`, {
         method: "GET",
         headers: {
           "x-auth-token": token,

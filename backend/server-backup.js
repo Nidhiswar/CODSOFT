@@ -14,15 +14,15 @@ const enquiryRoutes = require("./routes/enquiryRoutes");
 const app = express();
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGO_URI = process.env.MONGO_URI;
 console.log("🔍 Attempting to connect to MongoDB...");
 
 
-if (!MONGODB_URI) {
-    console.error("❌ MONGODB_URI is not defined in .env file");
+if (!MONGO_URI) {
+    console.error("❌ MONGO_URI is not defined in .env file");
 }
 
-mongoose.connect(MONGODB_URI, {
+mongoose.connect(MONGO_URI, {
     serverSelectionTimeoutMS: 5000,
     family: 4,
 })
@@ -104,7 +104,7 @@ async function callOllama(message, history) {
             content: h.parts[0].text
         }));
 
-        const response = await fetch("http://127.0.0.1:11434/api/chat", {
+        const response = await fetch(`${process.env.OLLAMA_URL || "https://your-ollama-host"}/api/chat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -221,10 +221,9 @@ app.use((err, req, res, next) => {
     });
 });
 
-const PORT = process.env.PORT || 5009;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Novel Exporters Backend Active: http://127.0.0.1:${PORT}`);
-    console.log(`📂 API Gateway: http://127.0.0.1:${PORT}/api`);
+    console.log(`Server running on ${PORT}`);
 }).on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
         console.error(`❌ Port ${PORT} is already in use. Please kill the existing process or use a different port.`);

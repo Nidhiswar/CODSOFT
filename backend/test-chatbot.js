@@ -6,7 +6,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
  * Run: node backend/test-chatbot.js
  */
 
-const API_BASE = "http://127.0.0.1:5009";
+const API_BASE = (process.env.API_BASE_URL || "https://your-backend.onrender.com").replace(/\/$/, "");
 
 async function testHealth() {
   console.log("\n🔍 Testing backend health endpoint...");
@@ -51,8 +51,8 @@ async function runTests() {
   
   console.log("\n📋 Environment Check:");
   console.log(`   GOOGLE_API_KEY: ${process.env.GOOGLE_API_KEY ? "✓ Set" : "✗ Missing"}`);
-  console.log(`   MONGODB_URI: ${process.env.MONGODB_URI ? "✓ Set" : "✗ Missing"}`);
-  console.log(`   PORT: ${process.env.PORT || 5009}`);
+  console.log(`   MONGO_URI: ${process.env.MONGO_URI ? "✓ Set" : "✗ Missing"}`);
+  console.log(`   PORT: ${process.env.PORT || 5000}`);
   
   await testHealth();
   await testChat();
@@ -61,7 +61,7 @@ async function runTests() {
   console.log("💡 Troubleshooting tips:");
   console.log("   1. Ensure backend server is running (npm run dev)");
   console.log("   2. If 'service_unavailable': Check GOOGLE_API_KEY is valid");
-  console.log("   3. Alternative: Install & run Ollama on http://127.0.0.1:11434");
+  console.log("   3. Alternative: Install & run Ollama on your configured host");
   console.log("   4. Check backend logs for detailed error messages");
   console.log("═══════════════════════════════════════════════\n");
 }

@@ -3,7 +3,6 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 
 const CANDIDATE_KEYS = [
-    "MONGODB_URI",
     "MONGO_URI",
     "DATABASE_URL",
     "MONGOOSE_URI",

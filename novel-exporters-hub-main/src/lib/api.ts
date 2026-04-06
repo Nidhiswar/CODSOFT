@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5009/api";
+const API = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+const API_BASE_URL = `${API}/api`;
 
 const getHeaders = () => ({
     "Content-Type": "application/json",

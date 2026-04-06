@@ -5,9 +5,8 @@ const path = require('path');
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const requiredEnvVars = [
-  'MONGODB_URI',
+  'MONGO_URI',
   'JWT_SECRET',
-  'PORT',
   'CLIENT_URL' // For CORS
 ];
 
@@ -27,8 +26,8 @@ const validateEnv = () => {
       console.warn('⚠️  JWT_SECRET is short. It should be at least 32 characters long for security.');
   }
 
-  if (process.env.MONGODB_URI && process.env.MONGODB_URI.includes('<password>')) {
-    throw new Error('❌ MONGODB_URI contains placeholder credentials. Please update your .env file.');
+  if (process.env.MONGO_URI && process.env.MONGO_URI.includes('<password>')) {
+    throw new Error('❌ MONGO_URI contains placeholder credentials. Please update your .env file.');
   }
 };
 
@@ -42,11 +41,11 @@ try {
 
 module.exports = {
   port: process.env.PORT || 5000,
-  mongoUri: process.env.MONGODB_URI,
+  mongoUri: process.env.MONGO_URI,
   jwtSecret: process.env.JWT_SECRET,
   googleApiKey: process.env.GOOGLE_API_KEY,
   emailUser: process.env.EMAIL_USER,
   emailPass: process.env.EMAIL_PASS,
-  clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+  clientUrl: process.env.CLIENT_URL,
   env: process.env.NODE_ENV || 'development'
 };
