@@ -19,18 +19,31 @@ export const api = {
         return data;
     },
 
-    login: async (credentials: any) => {
-        const res = await fetch(`${API_BASE_URL}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                identifier: credentials.email || credentials.phone,
-                password: credentials.password
-            }),
-        });
-        const data = await res.json();
-        if (data.token) localStorage.setItem("token", data.token);
-        return data;
+    login: async (credentials: any, retry = 0) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    identifier: credentials.email || credentials.phone,
+                    password: credentials.password
+                }),
+            });
+
+            if (!res.ok) {
+                throw new Error(`Login failed with status ${res.status}`);
+            }
+
+            const data = await res.json();
+            if (data.token) localStorage.setItem("token", data.token);
+            return data;
+        } catch (err) {
+            if (retry < 3) {
+                await new Promise((resolve) => setTimeout(resolve, 4000));
+                return api.login(credentials, retry + 1);
+            }
+            throw err;
+        }
     },
 
     getMe: async () => {

@@ -159,6 +159,15 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const apiUrl = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+    if (!apiUrl) return;
+
+    fetch(`${apiUrl}/healthz`).catch(() => {
+      // Ignore wake-up failures and let normal requests continue.
+    });
+  }, []);
+
+  useEffect(() => {
     const initUser = async () => {
       const token = localStorage.getItem("token");
       if (token) {

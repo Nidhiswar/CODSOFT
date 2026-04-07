@@ -49,30 +49,60 @@ app.use(cors({
 
 app.use(express.json({ limit: '10kb' })); // Body parser, reading data from body into req.body
 
-// MongoDB Connection
-console.log("🔍 Attempting to connect to MongoDB...");
+// MongoDB Connection with retry support for Render free-tier sleep cycles
+let dbReconnectTimer = null;
+let isDbConnecting = false;
+let reminderSchedulerStarted = false;
 
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 5000,
-  family: 4,
-})
-  .then(() => {
-    console.log("🚀 MongoDB Integrated Successfully");
+const scheduleReconnect = () => {
+  if (dbReconnectTimer) return;
 
-    // Start the delivery reminder scheduler
-    startDeliveryReminderScheduler();
-  })
-  .catch(err => {
-    console.error("❌ MongoDB Connection Error:", err.message);
-    process.exit(1);
-  });
+  dbReconnectTimer = setTimeout(() => {
+    dbReconnectTimer = null;
+    connectDB();
+  }, 5000);
+};
 
-mongoose.connection.on("error", err => {
-  console.error("❌ MongoDB Runtime Error:", err);
+const connectDB = async () => {
+  if (isDbConnecting || mongoose.connection.readyState === 1) return;
+
+  isDbConnecting = true;
+  console.log("🔍 Attempting to connect to MongoDB...");
+
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      family: 4,
+    });
+
+    console.log("MongoDB connected");
+
+    if (!reminderSchedulerStarted) {
+      startDeliveryReminderScheduler();
+      reminderSchedulerStarted = true;
+    }
+  } catch (err) {
+    console.error("MongoDB connection error:", err.message || err);
+    scheduleReconnect();
+  } finally {
+    isDbConnecting = false;
+  }
+};
+
+connectDB();
+
+mongoose.connection.on("connected", () => {
+  console.log("DB connected");
 });
 
 mongoose.connection.on("disconnected", () => {
-  console.warn("⚠️ MongoDB disconnected");
+  console.log("DB disconnected");
+  scheduleReconnect();
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error("❌ MongoDB Runtime Error:", err);
 });
 
 // Health Check / Integration Route
@@ -120,6 +150,8 @@ app.get("/api", (req, res) => {
     version: "2.0.0"
   });
 });
+
+app.get("/healthz", (req, res) => res.status(200).send("OK"));
 
 // Routes
 const orderRoutes = require("./routes/orderRoutes");
@@ -522,6 +554,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on ${PORT}`);
+  console.log(`CLIENT_URL configured: ${process.env.CLIENT_URL || "(missing)"}`);
+  console.log(`Mongo readyState on boot: ${mongoose.connection.readyState}`);
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.error(`❌ Port ${PORT} is already in use. Please kill the existing process or use a different port.`);
