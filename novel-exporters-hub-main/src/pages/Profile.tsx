@@ -207,7 +207,7 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
         return;
       }
 
-      const API = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+      const API = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "").replace(/\/api$/i, "");
       const response = await fetch(`${API}/api/orders/my-orders/pdf`, {
         method: "GET",
         headers: {

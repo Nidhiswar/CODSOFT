@@ -1,4 +1,4 @@
-const API = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "").replace(/\/api$/i, "");
 const API_BASE_URL = `${API}/api`;
 
 const getHeaders = () => ({

@@ -223,6 +223,14 @@ const Login = ({ onLogin }: LoginProps) => {
               </div>
             )}
 
+            {isLogin && isLoading && (
+              <div className="rounded-xl border border-amber-300/30 bg-amber-500/10 px-4 py-3 text-center">
+                <p className="text-sm font-semibold text-amber-100">
+                  Server is waking up, please wait a few seconds...
+                </p>
+              </div>
+            )}
+
             <Button
               type="submit"
               disabled={isLoading}

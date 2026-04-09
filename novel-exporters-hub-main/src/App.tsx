@@ -159,7 +159,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const apiUrl = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+    const apiUrl = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "").replace(/\/api$/i, "");
     if (!apiUrl) return;
 
     fetch(`${apiUrl}/healthz`).catch(() => {

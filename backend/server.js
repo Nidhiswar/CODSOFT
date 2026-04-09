@@ -42,10 +42,36 @@ app.use(mongoSanitize());
 app.use(hpp());
 
 // 5. Secure CORS
-app.use(cors({
-  origin: process.env.CLIENT_URL,
-  credentials: true
-}));
+const configuredOrigins = [
+  process.env.CLIENT_URL,
+  process.env.CLIENT_URL_2,
+  ...(process.env.CORS_ORIGINS || "").split(","),
+]
+  .map((origin) => (origin || "").trim())
+  .filter(Boolean);
+
+const isTrustedOrigin = (origin) => {
+  if (configuredOrigins.includes(origin)) return true;
+  if (/^https:\/\/([a-z0-9-]+\.)?novelexporters\.com$/i.test(origin)) return true;
+  if (/^https:\/\/novelexporters(-[a-z0-9]+)?\.onrender\.com$/i.test(origin)) return true;
+  return false;
+};
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser requests (curl/health checks) and explicitly trusted browser origins.
+    if (!origin || isTrustedOrigin(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json({ limit: '10kb' })); // Body parser, reading data from body into req.body
 
