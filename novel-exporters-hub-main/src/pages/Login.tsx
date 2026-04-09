@@ -32,6 +32,12 @@ const Login = ({ onLogin }: LoginProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isLogin && (!formData.email.trim() || !formData.password)) {
+      alert("Please enter email and password");
+      return;
+    }
+
     setIsLoading(true);
 
     if (!isLogin && formData.password !== formData.confirmPassword) {
@@ -68,7 +74,7 @@ const Login = ({ onLogin }: LoginProps) => {
         toast.error(`⚠️ ${res.message || "Authentication failed. Please check your credentials."}`);
       }
     } catch (err: any) {
-      toast.error("❌ Authentication error. Please try again or contact support.");
+      toast.error(`❌ ${err?.message || "Authentication error. Please try again or contact support."}`);
     } finally {
       setIsLoading(false);
     }

@@ -37,15 +37,36 @@ router.post("/register", async (req, res) => {
 
 // Login
 router.post("/login", async (req, res) => {
-    const { identifier, password } = req.body; // identifier can be email or phone
+    const { email, password, identifier } = req.body;
+    const emailInput = (email || identifier || "").trim();
+
+    console.log("Login request body:", {
+        email: email || "",
+        identifier: identifier || "",
+        password: password ? "[provided]" : "[missing]"
+    });
+
+    if (!emailInput || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+    }
+
     try {
-        const user = await User.findOne({
-            $or: [{ email: identifier }, { phone: identifier }]
-        });
-        if (!user) return res.status(400).json({ message: "Invalid credentials" });
+        let user = await User.findOne({ email: emailInput });
+
+        // Backward compatibility for older clients that used identifier/phone login.
+        if (!user) {
+            user = await User.findOne({ phone: emailInput });
+        }
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid email" });
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid password" });
+        }
 
         // Ensure novelexporters@gmail.com always has admin role
         if (user.email === "novelexporters@gmail.com" && user.role !== "admin") {
@@ -59,6 +80,7 @@ router.post("/login", async (req, res) => {
         const token = jwt.sign({ id: user._id }, config.jwtSecret, { expiresIn: "7d" });
         res.json({ token, user: { id: user._id, username: user.username, email: user.email, role: user.role, cart: user.cart, hasConsented: user.hasConsented, isFirstLogin: user.isFirstLogin, showConsentOverlay } });
     } catch (err) {
+        console.error("Login error:", err);
         res.status(500).json({ message: "Server error" });
     }
 });

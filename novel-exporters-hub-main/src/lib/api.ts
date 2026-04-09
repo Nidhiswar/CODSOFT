@@ -20,27 +20,40 @@ export const api = {
     },
 
     login: async (credentials: any, retry = 0) => {
+        const emailInput = (credentials.email || "").trim();
+        const passwordInput = credentials.password || "";
+
+        if (!emailInput || !passwordInput) {
+            throw new Error("Please enter email and password");
+        }
+
+        const data = {
+            email: emailInput,
+            password: passwordInput,
+        };
+
+        console.log("Sending login data:", data);
+
         try {
             const res = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    identifier: credentials.email || credentials.phone,
-                    password: credentials.password
-                }),
+                body: JSON.stringify(data),
             });
 
+            const result = await res.json();
+            console.log("Login response:", result);
+
             if (!res.ok) {
-                throw new Error(`Login failed with status ${res.status}`);
+                throw new Error(result.message || "Login failed");
             }
 
-            const data = await res.json();
-            if (data.token) localStorage.setItem("token", data.token);
-            return data;
+            if (result.token) localStorage.setItem("token", result.token);
+            return result;
         } catch (err) {
             if (retry < 3) {
                 await new Promise((resolve) => setTimeout(resolve, 4000));
-                return api.login(credentials, retry + 1);
+                return api.login(data, retry + 1);
             }
             throw err;
         }
