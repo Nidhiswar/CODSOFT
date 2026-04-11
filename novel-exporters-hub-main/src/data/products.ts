@@ -138,7 +138,7 @@ export const products: Product[] = [
     name: "Custom Product on Request",
     tamilName: "தனிப்பயன் உற்பத்தி (Thanippayan Urpathi)",
     description: "If the product you require is not listed on our website, we can source and export it based on your specifications with quality assurance.",
-    image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80",
+    image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=900&q=72",
     category: "EXPORT",
     origin: "India",
     harvestTiming: "On Demand",

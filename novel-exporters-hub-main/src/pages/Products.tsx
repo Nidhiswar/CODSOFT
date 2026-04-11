@@ -8,6 +8,7 @@ import { X, MapPin, Calendar, ScrollText, CheckCircle, ArrowRight, Check, Search
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { optimizeImageUrl } from "@/lib/image";
 
 const categories = ["All", "Leaves", "Seeds", "Bark", "Flowers", "EXPORT"];
 
@@ -42,7 +43,7 @@ const Products = ({ user }: { user: any }) => {
       {/* Hero Section */}
       <section className="relative py-16 sm:py-20 md:py-24 lg:py-32 bg-zinc-950 overflow-hidden">
         <div 
-          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center"
+          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=1600&q=70')] bg-cover bg-center"
           style={{ 
             opacity: 0.6,
             filter: 'brightness(1.1) contrast(1.1) saturate(1.15)'
@@ -167,8 +168,11 @@ const Products = ({ user }: { user: any }) => {
                 <div className="md:w-1/2 h-2/5 sm:h-1/2 md:h-full relative overflow-hidden bg-black flex shrink-0">
                   <motion.img
                     layoutId={`product-image-${selectedProduct.id}`}
-                    src={selectedProduct.image}
+                    src={optimizeImageUrl(selectedProduct.image, { width: 1400, quality: 76 })}
                     alt={selectedProduct.name}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/60 to-transparent" />
@@ -442,6 +446,8 @@ const Products = ({ user }: { user: any }) => {
                 <img
                   src="/assets/air-export-cargo.png"
                   alt="Novel Exporters Air Cargo"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end justify-end p-12">

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { Product } from '@/data/products';
 import { api } from '@/lib/api';
 
@@ -22,38 +22,120 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const CART_STORAGE_KEY = 'cart';
+const CART_SNAPSHOT_KEY = 'cart_snapshot_at';
+
+const isWeightUnit = (unit: unknown): unit is WeightUnit => unit === 'kg' || unit === 'g';
+
+const normalizeCart = (rawCart: unknown): CartItem[] => {
+    if (!Array.isArray(rawCart)) return [];
+
+    return rawCart
+        .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object' && typeof (item as { id?: unknown }).id === 'string')
+        .map(item => {
+            const quantity = typeof item.quantity === 'number' ? item.quantity : Number(item.quantity);
+            return {
+                ...(item as unknown as Product),
+                quantity: Number.isFinite(quantity) ? Math.max(1, quantity) : 1,
+                unit: isWeightUnit(item.unit) ? item.unit : 'kg'
+            } as CartItem;
+        });
+};
+
+const parseStoredCart = (): CartItem[] => {
+    try {
+        const rawCart = localStorage.getItem(CART_STORAGE_KEY);
+        if (!rawCart) return [];
+
+        const parsed = JSON.parse(rawCart);
+        return normalizeCart(parsed);
+    } catch {
+        return [];
+    }
+};
+
+const persistCartSnapshot = (cart: CartItem[]) => {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    localStorage.setItem(CART_SNAPSHOT_KEY, Date.now().toString());
+};
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [cart, setCart] = useState<CartItem[]>([]);
+    const [cart, setCart] = useState<CartItem[]>(() => parseStoredCart());
+    const syncQueueRef = useRef<Promise<unknown>>(Promise.resolve());
 
-    // Load cart from localStorage or backend on mount
-    useEffect(() => {
-        const savedCart = localStorage.getItem('cart');
-        if (savedCart) {
-            setCart(JSON.parse(savedCart));
-        }
-
+    const queueBackendSync = useCallback((nextCart: CartItem[]) => {
         const token = localStorage.getItem('token');
-        if (token) {
-            api.getMe().then(user => {
-                if (user && user.cart) {
-                    setCart(user.cart);
-                }
+        if (!token) return;
+
+        syncQueueRef.current = syncQueueRef.current
+            .catch(() => undefined)
+            .then(() => api.updateCart(nextCart))
+            .catch(() => {
+                console.error('Failed to sync cart');
             });
-        }
     }, []);
 
-    // Save cart to localStorage and sync with backend
+    const applyCartUpdate = useCallback((updater: (prev: CartItem[]) => CartItem[]) => {
+        setCart(prev => {
+            const next = updater(prev);
+            persistCartSnapshot(next);
+            queueBackendSync(next);
+            return next;
+        });
+    }, [queueBackendSync]);
+
+    // Hydrate cart once and prevent late API responses from reviving stale items.
     useEffect(() => {
-        localStorage.setItem('cart', JSON.stringify(cart));
+        const localCartAtMount = parseStoredCart();
+        const hasSnapshotAtMount = localStorage.getItem(CART_SNAPSHOT_KEY) !== null;
+        if (!hasSnapshotAtMount && localCartAtMount.length > 0) {
+            persistCartSnapshot(localCartAtMount);
+        }
 
         const token = localStorage.getItem('token');
-        if (token && cart.length > 0) {
-            api.updateCart(cart);
-        }
-    }, [cart]);
+        if (!token) return;
+
+        let isActive = true;
+
+        api.getMe()
+            .then(user => {
+                if (!isActive || !user) return;
+
+                const backendCart = normalizeCart(user.cart);
+                const latestLocalCart = parseStoredCart();
+                const hasLatestLocalSnapshot = localStorage.getItem(CART_SNAPSHOT_KEY) !== null;
+
+                if (hasLatestLocalSnapshot) {
+                    setCart(latestLocalCart);
+                    queueBackendSync(latestLocalCart);
+                    return;
+                }
+
+                setCart(backendCart);
+                persistCartSnapshot(backendCart);
+            })
+            .catch(() => {
+                // Keep local cart when backend sync fails.
+            });
+
+        return () => {
+            isActive = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleStorageSync = (event: StorageEvent) => {
+            if (event.key === CART_STORAGE_KEY) {
+                setCart(parseStoredCart());
+            }
+        };
+
+        window.addEventListener('storage', handleStorageSync);
+        return () => window.removeEventListener('storage', handleStorageSync);
+    }, []);
 
     const addToCart = (product: Product) => {
-        setCart(prev => {
+        applyCartUpdate(prev => {
             const existing = prev.find(item => item.id === product.id);
             if (existing) {
                 return prev.map(item =>
@@ -65,24 +147,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const removeFromCart = (productId: string) => {
-        setCart(prev => prev.filter(item => item.id !== productId));
+        applyCartUpdate(prev => prev.filter(item => item.id !== productId));
     };
 
     const updateQuantity = (productId: string, quantity: number) => {
-        setCart(prev => prev.map(item =>
+        applyCartUpdate(prev => prev.map(item =>
             item.id === productId ? { ...item, quantity: Math.max(1, quantity) } : item
         ));
     };
 
     const updateUnit = (productId: string, unit: WeightUnit) => {
-        setCart(prev => prev.map(item =>
+        applyCartUpdate(prev => prev.map(item =>
             item.id === productId ? { ...item, unit } : item
         ));
     };
 
     const clearCart = () => {
-        setCart([]);
-        localStorage.removeItem('cart');
+        applyCartUpdate(() => []);
     };
 
     const totalItems = cart.length;

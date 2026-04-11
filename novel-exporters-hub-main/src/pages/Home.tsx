@@ -17,7 +17,7 @@ const Home = () => {
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center bg-zinc-950 overflow-hidden">
         <div 
-          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=1920')] bg-cover bg-center"
+          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=1600&q=70')] bg-cover bg-center"
           style={{ 
             opacity: 0.6,
             filter: 'brightness(1.1) contrast(1.1) saturate(1.15)'
@@ -105,6 +105,8 @@ const Home = () => {
                   src="/assets/curry-leaves-farm.jpg"
                   alt="Novel Exporters Spice Farming"
                   loading="lazy"
+                  decoding="async"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 group-hover:rotate-1"
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-spice-earth/20 opacity-0 pointer-events-none transition-opacity duration-500 group-hover:opacity-100" />

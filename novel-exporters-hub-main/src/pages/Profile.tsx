@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { getRecommendedProducts, Product } from "@/data/products";
+import { optimizeImageUrl } from "@/lib/image";
 
 interface ProfileProps {
   user: { email: string; username?: string; phone?: string; isAdmin: boolean; role?: string } | null;
@@ -496,7 +497,15 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
                         className="p-4 rounded-2xl bg-gradient-to-r from-muted/30 to-transparent border border-border/50 flex items-center gap-4 group hover:border-primary/30 hover:shadow-md transition-all duration-300"
                       >
                         <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-border shadow-sm">
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                          <img
+                            src={optimizeImageUrl(item.image, { width: 320, quality: 72 })}
+                            alt={item.name}
+                            loading="lazy"
+                            decoding="async"
+                            width={128}
+                            height={128}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                          />
                         </div>
                         <div className="flex-grow min-w-0">
                           <h3 className="font-bold text-foreground truncate">{item.name}</h3>
@@ -573,8 +582,12 @@ const Profile = ({ user, onLogout, onUserUpdate }: ProfileProps) => {
                           <div className="flex items-center gap-2">
                             <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0">
                               <img 
-                                src={product.image} 
+                                src={optimizeImageUrl(product.image, { width: 240, quality: 72 })}
                                 alt={product.name} 
+                                loading="lazy"
+                                decoding="async"
+                                width={80}
+                                height={80}
                                 className="w-full h-full object-cover transition-transform group-hover:scale-110"
                               />
                             </div>

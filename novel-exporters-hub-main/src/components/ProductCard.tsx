@@ -5,6 +5,7 @@ import { useCart } from "@/hooks/useCart";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { optimizeImageUrl } from "@/lib/image";
 
 interface ProductCardProps {
   product: Product;
@@ -18,6 +19,7 @@ const ProductCard = ({ product, index = 0, onClick, className, user }: ProductCa
   const { addToCart, cart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
   const navigate = useNavigate();
+  const cardImageSrc = optimizeImageUrl(product.image, { width: 960, quality: 74 });
   
   const isInCart = cart.some(item => item.id === product.id);
 
@@ -75,9 +77,14 @@ const ProductCard = ({ product, index = 0, onClick, className, user }: ProductCa
       <div className="relative aspect-[4/5] overflow-hidden">
         <motion.img
           layoutId={`product-image-${product.id}`}
-          src={product.image}
+          src={cardImageSrc}
           alt={product.name}
-          loading="lazy"
+          loading={index < 4 ? "eager" : "lazy"}
+          decoding="async"
+          fetchPriority={index < 2 ? "high" : "low"}
+          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+          width={800}
+          height={1000}
           className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
         />
 

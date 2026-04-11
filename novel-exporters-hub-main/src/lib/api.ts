@@ -62,6 +62,7 @@ export const api = {
     getMe: async () => {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
             headers: getHeaders(),
+            cache: "no-store",
         });
         return res.json();
     },
@@ -126,6 +127,7 @@ export const api = {
             method: "POST",
             headers: getHeaders(),
             body: JSON.stringify({ cart }),
+            keepalive: true,
         });
         return res.json();
     },

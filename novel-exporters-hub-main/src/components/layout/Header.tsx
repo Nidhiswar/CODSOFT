@@ -7,6 +7,7 @@ import novelLogo from "@/assets/novel-logo-dynamic.png";
 import { useCart } from "@/hooks/useCart";
 import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
+import { optimizeImageUrl } from "@/lib/image";
 
 const getNavLinks = (isAdmin: boolean) => {
   const baseLinks = [
@@ -193,8 +194,12 @@ const Header = ({ user, onLogout }: HeaderProps) => {
                               className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors group/item"
                             >
                               <img
-                                src={item.image}
+                                src={optimizeImageUrl(item.image, { width: 200, quality: 72 })}
                                 alt={item.name}
+                                loading="lazy"
+                                decoding="async"
+                                width={96}
+                                height={96}
                                 className="w-12 h-12 rounded-lg object-cover"
                               />
                               <div className="flex-1 min-w-0">

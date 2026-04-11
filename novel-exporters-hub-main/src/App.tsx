@@ -201,6 +201,7 @@ const App = () => {
     setUser(null);
     localStorage.removeItem("token");
     localStorage.removeItem("cart");
+    localStorage.removeItem("cart_snapshot_at");
   };
 
   const handleConsentAccept = async () => {
