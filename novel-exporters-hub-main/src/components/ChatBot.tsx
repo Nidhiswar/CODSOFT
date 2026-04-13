@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, MessageSquare, X, MinusCircle, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { Send, Bot, X, MinusCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
@@ -108,7 +108,7 @@ const ChatBot = () => {
                                 <img src={novelLogo} alt="Novel Exporters" className="w-7 h-7 object-contain" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-foreground">Aromatic Specialist</p>
+                                <p className="text-xs font-bold text-foreground">AI Robo Specialist</p>
                                 <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
                                     Ask about spice origins, harvest seasons, or bulk export logistics.
                                 </p>
@@ -118,18 +118,31 @@ const ChatBot = () => {
                 )}
             </AnimatePresence>
 
-            {/* Chat Bubble Button */}
+            {/* AI Assistant Button */}
             <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 ${isOpen ? "bg-zinc-900 text-white rotate-90" : "bg-spice-gold text-black shadow-spice-gold/20"
+                aria-label={isOpen ? "Close AI assistant" : "Open AI assistant"}
+                className={`group relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 ${isOpen ? "bg-zinc-900 text-white rotate-90" : "bg-gradient-to-br from-amber-400 via-spice-gold to-amber-600 text-black shadow-[0_15px_35px_rgba(217,119,6,0.45)]"
                     }`}
             >
-                {isOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" /> : <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />}
+                {isOpen ? (
+                    <X className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+                ) : (
+                    <>
+                        <span className="absolute inset-[3px] rounded-full bg-zinc-950 flex items-center justify-center">
+                            <Bot className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-spice-gold" />
+                        </span>
+                        <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-white text-[9px] font-black tracking-wide text-zinc-900 shadow-md">
+                            AI
+                        </span>
+                        <span className="absolute inset-0 rounded-full border border-spice-gold/40 animate-ping [animation-duration:2.6s]" />
+                    </>
+                )}
 
                 {!isOpen && (
-                    <span className="absolute top-0 right-0 w-4 h-4 bg-green-500 border-2 border-white dark:border-zinc-950 rounded-full animate-pulse" />
+                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-zinc-950 rounded-full animate-pulse" />
                 )}
             </motion.button>
 
