@@ -108,7 +108,7 @@ const ChatBot = () => {
                                 <img src={novelLogo} alt="Novel Exporters" className="w-7 h-7 object-contain" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-foreground">AI Robo Specialist</p>
+                                <p className="text-xs font-bold text-foreground">Novel Exporters AI Assistant</p>
                                 <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
                                     Ask about spice origins, harvest seasons, or bulk export logistics.
                                 </p>
